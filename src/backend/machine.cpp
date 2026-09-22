@@ -78,9 +78,11 @@ void Interpreter::execute(const Block* program) {
 
       uint64_t step = 0;
 
+      BetaReducer reducer;
+
       while (true) {
 
-        auto [did_step, next_expr] = BetaReducer::step(current.get());
+        auto [did_step, next_expr] = reducer.step(current.get());
 
         if (!did_step) break;
 
@@ -90,15 +92,16 @@ void Interpreter::execute(const Block* program) {
           std::cout << color::YELLOW << " >  " << color::RESET << "[ ";
           current->print();
           std::cout << "]\n";
-
         }
 
         step++;
 
       }
 
+      auto printable = reducer.deepReduce(current.get());
+
       std::cout << color::BLUE << " -  " << color::RESET << "[ ";
-      current->print();
+      printable->print();
       std::cout << "]\n\n";
 
     }

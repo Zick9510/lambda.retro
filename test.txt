@@ -87,7 +87,7 @@ func FACT_GEN ( recurse n ) {
 }
 
 ,func FACT ( n ) { (( Z FACT_GEN ) n ) } ,, Two ways of implementing recursion
-func FACT ( n ) { fix FACT_GEN n }
+,func FACT ( n ) { fix FACT_GEN n }
 
 FACT 2;
 
@@ -142,7 +142,7 @@ func SUM_LIST_GEN (recurse l) {
 	) 0
 }
 
-func SUM_LIST ( l ) { fix SUM_LIST_GEN l }
+,func SUM_LIST ( l ) { fix SUM_LIST_GEN l }
 
 SUM_LIST ( PAIR 2 ( PAIR 7 ( PAIR 1 EMPTY ) ) );
 
@@ -260,3 +260,7 @@ func +1  ( a ) { + a 1 }
 [ PAIR | 1 2 3 4 EMPTY ]; , Syntactic sugar for linked lists
 
 MAP +1 [ PAIR | 1 2 3 4 EMPTY ];
+
+ADD 3 4;
+
+ADD 3 4 f x;

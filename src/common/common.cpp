@@ -40,18 +40,18 @@ bool LambdaApplication::are_ast_equal(const Expression* a, const Expression* b) 
   if (!a || !b) return false;
 
   if (auto va = dynamic_cast<const LambdaVariable*>(a)) {
-      auto vb = dynamic_cast<const LambdaVariable*>(b);
-      return vb && va->name == vb->name;
+    auto vb = dynamic_cast<const LambdaVariable*>(b);
+    return vb && va->name == vb->name;
   }
 
   if (auto fa = dynamic_cast<const LambdaFunction*>(a)) {
-      auto fb = dynamic_cast<const LambdaFunction*>(b);
-      return fb && fa->args == fb->args && are_ast_equal(fa->body.get(), fb->body.get());
+    auto fb = dynamic_cast<const LambdaFunction*>(b);
+    return fb && fa->args == fb->args && are_ast_equal(fa->body.get(), fb->body.get());
   }
 
   if (auto aa = dynamic_cast<const LambdaApplication*>(a)) {
-      auto ab = dynamic_cast<const LambdaApplication*>(b);
-      return ab && are_ast_equal(aa->func.get(), ab->func.get()) && are_ast_equal(aa->arg.get(), ab->arg.get());
+    auto ab = dynamic_cast<const LambdaApplication*>(b);
+    return ab && are_ast_equal(aa->func.get(), ab->func.get()) && are_ast_equal(aa->arg.get(), ab->arg.get());
   }
 
   return false;
@@ -115,6 +115,7 @@ LambdaApplication::ListData LambdaApplication::_extract_list() const {
 
     data.elements.push_back(app_inner->arg.get());
     current = app_outer->arg.get();
+
   }
 
   if (!data.elements.empty()) { data.is_valid = true; }

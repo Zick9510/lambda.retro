@@ -14,9 +14,9 @@ public:
 
   BetaReducer();
 
-  static std::pair<bool, std::unique_ptr<Expression>> step(const Expression* node);
+  std::pair<bool, std::unique_ptr<Expression>> step(const Expression* node);
 
-  static std::unique_ptr<Expression> deepReduce(const Expression* node);
+  std::unique_ptr<Expression> deepReduce(const Expression* node);
   static std::unique_ptr<Expression> reduceNode(const Expression* node);
 
   void visit(const LambdaVariable   * node) override;
