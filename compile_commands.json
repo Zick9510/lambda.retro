@@ -1,0 +1,142 @@
+[
+  {
+    "file": "src/backend/machine.cpp",
+    "arguments": [
+      "g++",
+      "-MMD",
+      "-MP",
+      "-std=c++23",
+      "-march=native",
+      "-Iinclude",
+      "-fexceptions",
+      "-O3",
+      "-fomit-frame-pointer",
+      "-c",
+      "src/backend/machine.cpp",
+      "-o",
+      "obj/backend/machine.o"
+    ],
+    "directory": "/home/zick9510/cosas/coding/Lambda",
+    "output": "obj/backend/machine.o"
+  },
+  {
+    "file": "src/frontend/parser.cpp",
+    "arguments": [
+      "g++",
+      "-MMD",
+      "-MP",
+      "-std=c++23",
+      "-march=native",
+      "-Iinclude",
+      "-fexceptions",
+      "-O3",
+      "-fomit-frame-pointer",
+      "-c",
+      "src/frontend/parser.cpp",
+      "-o",
+      "obj/frontend/parser.o"
+    ],
+    "directory": "/home/zick9510/cosas/coding/Lambda",
+    "output": "obj/frontend/parser.o"
+  },
+  {
+    "file": "src/frontend/lexer.cpp",
+    "arguments": [
+      "g++",
+      "-MMD",
+      "-MP",
+      "-std=c++23",
+      "-march=native",
+      "-Iinclude",
+      "-fexceptions",
+      "-O3",
+      "-fomit-frame-pointer",
+      "-c",
+      "src/frontend/lexer.cpp",
+      "-o",
+      "obj/frontend/lexer.o"
+    ],
+    "directory": "/home/zick9510/cosas/coding/Lambda",
+    "output": "obj/frontend/lexer.o"
+  },
+  {
+    "file": "src/common/common.cpp",
+    "arguments": [
+      "g++",
+      "-MMD",
+      "-MP",
+      "-std=c++23",
+      "-march=native",
+      "-Iinclude",
+      "-fexceptions",
+      "-O3",
+      "-fomit-frame-pointer",
+      "-c",
+      "src/common/common.cpp",
+      "-o",
+      "obj/common/common.o"
+    ],
+    "directory": "/home/zick9510/cosas/coding/Lambda",
+    "output": "obj/common/common.o"
+  },
+  {
+    "file": "src/driver/driver.cpp",
+    "arguments": [
+      "g++",
+      "-MMD",
+      "-MP",
+      "-std=c++23",
+      "-march=native",
+      "-Iinclude",
+      "-fexceptions",
+      "-O3",
+      "-fomit-frame-pointer",
+      "-c",
+      "src/driver/driver.cpp",
+      "-o",
+      "obj/driver/driver.o"
+    ],
+    "directory": "/home/zick9510/cosas/coding/Lambda",
+    "output": "obj/driver/driver.o"
+  },
+  {
+    "file": "src/b-reduction/reduc.cpp",
+    "arguments": [
+      "g++",
+      "-MMD",
+      "-MP",
+      "-std=c++23",
+      "-march=native",
+      "-Iinclude",
+      "-fexceptions",
+      "-O3",
+      "-fomit-frame-pointer",
+      "-c",
+      "src/b-reduction/reduc.cpp",
+      "-o",
+      "obj/b-reduction/reduc.o"
+    ],
+    "directory": "/home/zick9510/cosas/coding/Lambda",
+    "output": "obj/b-reduction/reduc.o"
+  },
+  {
+    "file": "src/main.cpp",
+    "arguments": [
+      "g++",
+      "-MMD",
+      "-MP",
+      "-std=c++23",
+      "-march=native",
+      "-Iinclude",
+      "-fexceptions",
+      "-O3",
+      "-fomit-frame-pointer",
+      "-c",
+      "src/main.cpp",
+      "-o",
+      "obj/main.o"
+    ],
+    "directory": "/home/zick9510/cosas/coding/Lambda",
+    "output": "obj/main.o"
+  }
+]

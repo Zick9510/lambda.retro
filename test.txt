@@ -1,0 +1,262 @@
+(\x. \y. x) a b;
+
+(\i j k. (j k) (i i) ) c1 c2 c3;
+
+(\x y. x);
+
+(\x y. x) a;
+
+(\x y. x) a b;
+
+(lambda f . f f) f1;
+
+func R ( f ) { f f }
+
+func true  ( x y ) { x }
+func false ( x y ) { y }
+
+true false;
+
+true false true;
+
+true false true false;
+
+true false true false true;
+
+func A ( f g ) { g f }
+
+func B ( f g ) { (A f g) (A f g) }
+
+B a b;
+
+R a;
+
+2 2 a;
+
+add 1 2;
+
+mult 4 add 3 2;
+mult 4 (add 3 2);
+
+func SUCC (n f x) { f (n f x ) }
+
+func Z ( f ) { (\x . f (\v . x x v)) (\x . f (\v . x x v)) }
+
+func TRUE  ( x y ) { x }
+func FALSE ( x y ) { y }
+
+func PAIR ( a b f ) { f a b   }
+func FIRST      (p) { p TRUE  }
+func SECOND     (p) { p FALSE }
+
+func SHIFT (p) { PAIR (SECOND p) ( SUCC (SECOND p)) }
+
+func PRED (n) { FIRST (n SHIFT (PAIR 0 0)) }
+
+func SUB ( a b f x ) { b PRED a f x }
+
+func ADD ( a b f x ) { a SUCC b f x }
+
+func MULT ( a b f x ) { a (b f) x }
+
+func IS_0 ( n ) { n (\x . FALSE) TRUE }
+
+func AND (a b) { a b FALSE }
+
+func NOT (a) { a FALSE TRUE }
+
+func OR (a b) { NOT (AND (NOT a) (NOT b)) }
+
+func XOR (a b) { AND (OR a b) (NOT (AND a b)) }
+
+func EQ (a b) { AND (IS_0 (SUB a b)) (IS_0 (SUB b a)) }
+
+ADD (SUB 5 3) (SUB 5 1);
+
+func FACT_GEN ( recurse n ) {
+	(
+		(
+			(
+				( IS_0 n )
+				( \d . 1 )
+			)
+			( \d .
+				(
+					( MULT n )
+					( recurse ( SUB n 1 ) )
+				)
+			)
+		) 0
+	)
+}
+
+,func FACT ( n ) { (( Z FACT_GEN ) n ) }
+func FACT ( n ) { fix FACT_GEN n }
+
+FACT 3;
+
+func + ( a b f x ) { ADD a b f x }
+
+func - ( a b f x ) { SUB a b f x }
+
+EQ (ADD 1 2) (+ 1 2);
+
+func POWER ( a b f x ) { b a f x } , a ** b
+
+POWER 2 3;
+
+func +14vb/%&%/%a/&aa23t ( a b ) { b a }
+
++14vb/%&%/%a/&aa23t 2 3;
+
+POWER 3 3;
+
+func LT (a b) { AND (IS_0 (SUB a b)) (NOT (IS_0 (SUB b a))) }
+
+func DIV_GEN ( recurse n m ) {
+	(
+		( LT n m )
+		( \d . 0 )
+		( \d .
+			SUCC ( recurse ( SUB n m ) m )
+		) 0
+	)
+}
+
+func DIV ( n m ) {
+	( IS_0 m )
+	( \d . 0 )
+	( \d .
+		fix DIV_GEN n m
+	) 0
+}
+
+func EMPTY ( f ) { TRUE }
+func IS_EMPTY ( l ) { l (\x y. FALSE)  }
+
+func SUM_LIST_GEN (recurse l) {
+	(
+		( IS_EMPTY l)
+		( \d . 0)
+		( \d .
+			ADD
+				(FIRST l)
+				(recurse (SECOND l))
+		)
+	) 0
+}
+
+func SUM_LIST ( l ) { fix SUM_LIST_GEN l }
+
+SUM_LIST ( PAIR 2 ( PAIR 7 ( PAIR 1 EMPTY ) ) );
+
+SUM_LIST [ PAIR | 3 1 4 EMPTY ];
+
+, Maps: Functional Approach
+
+func EMPTY_MAP ( k ) { EMPTY }
+
+,func INSERT ( M key value ) {
+,	\query_key . (EQ query_key key) (value) (M query_key)
+,}
+
+(INSERT (INSERT EMPTY_MAP 1 2) 2 3) 1;
+(INSERT (INSERT EMPTY_MAP 1 2) 2 3) 2;
+(INSERT (INSERT EMPTY_MAP 1 2) 2 3) 3;
+
+func M1 ( k ) { INSERT EMPTY_MAP 1 2 k }
+func M2 ( k ) { INSERT M1 2 3 k }
+func M3 ( k ) { INSERT M2 3 4 k }
+func M4 ( k ) { INSERT M3 2 EMPTY k }
+
+M4;
+
+M2 2;
+M4 2;
+
+, Maps: Linked-lists Approach
+
+func HEAD ( p ) { p TRUE  }
+func TAIL ( p ) { p FALSE }
+
+func GET_REC ( self M key ) {
+	(
+	( IS_EMPTY M )
+		( EMPTY )
+		( (EQ (HEAD (HEAD M)) key)
+			( \d2 . (TAIL (HEAD M) ) )
+			( \d2 . (self self (TAIL M) key) )
+		) 0
+	)
+}
+
+func GET ( M k ) { GET_REC GET_REC (M 0) k }
+
+func DEL_REC ( self M key ) {
+	( IS_EMPTY M )
+		( EMPTY )
+		( (EQ (HEAD (HEAD M)) key )
+			( \d2 . (self self (TAIL M) key ))
+			( \d2 . PAIR (HEAD M) (self self (TAIL M) key))
+		) 0
+}
+
+func DELETE ( M k ) { \d . DEL_REC DEL_REC (M 0) k }
+
+func INSERT ( M k v ) { \d . PAIR ( PAIR k v ) (M d) }
+
+func Mx ( d ) {
+	{ PAIR |
+		1 : (PAIR 1 2)
+		2 : (PAIR 4 8)
+		EMPTY
+	}
+}
+
+Mx;
+
+GET Mx 2;
+DELETE Mx 2;
+GET (INSERT Mx 3 (PAIR 9 18)) 2;
+GET (INSERT Mx 3 (PAIR 9 18)) 3;
+
+func My ( d ) { INSERT Mx 3 (PAIR 9 18) d }
+
+Mx; My;
+
+GET My 2;
+GET My 3;
+
+GET (DELETE Mx 2) 2;
+
+func Mz ( d ) {
+	{ PAIR |
+		0 :  0
+		1 : 10
+		2 : 20
+		3 : 30
+		4 : 40
+		EMPTY
+	}
+}
+
+GET Mz 3;
+
+'\0'; '\12'; 'a'; 0b0101; 0o070; 0xffff;
+
+func MAP_REC ( self f list ) {
+	( ( IS_EMPTY list )
+			( \d . EMPTY )
+			( \d . PAIR (f (HEAD list)) (self self f (TAIL list)))
+	) 0
+}
+
+func MAP ( f list ) { MAP_REC MAP_REC f list }
+
+func +1 ( a ) { + a 1 }
+
+(PAIR 1 (PAIR 2 (PAIR 3 (PAIR 4 EMPTY))));
+
+[ PAIR | 1 2 3 4 EMPTY ];
+
+MAP +1 [ PAIR | 1 2 3 4 EMPTY ];
