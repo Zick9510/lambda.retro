@@ -12,6 +12,7 @@ enum class TokenKind : uint8_t {
   LAMBDA    , // \ / lambda
 
   END_FILE  , //
+  NEW_LINE  , // \n
 
   DOT       , // .
   COLON     , // :
@@ -48,6 +49,35 @@ enum class TokenKind : uint8_t {
 
 };
 
+static const std::unordered_map<TokenKind, std::string> KIND_TO_STRING = {
+  { TokenKind::IDENTIFIER, "IDENTIFIER" },
+  { TokenKind::NUMBER, "NUMBER" },
+  { TokenKind::LAMBDA, "LAMBDA" },
+
+  { TokenKind::END_FILE, "END OF FILE" },
+  { TokenKind::NEW_LINE, "NEW LINE" },
+
+  { TokenKind::DOT, "." },
+  { TokenKind::COLON, "," },
+  { TokenKind::SEMICOLON, ";" },
+
+  { TokenKind::LPAREN, "(" },
+  { TokenKind::RPAREN, ")" },
+
+  { TokenKind::LCURLY, "{" },
+  { TokenKind::RCURLY, "}" },
+
+  { TokenKind::LBRACKET, "[" },
+  { TokenKind::RBRACKET, "]" },
+
+  { TokenKind::PIPE, "|" },
+
+  { TokenKind::ERROR, "[ERROR]" },
+
+  { TokenKind::FUNC, "func" },
+
+};
+
 enum class OP : uint8_t {
 
   ADD ,
@@ -71,7 +101,6 @@ static const std::unordered_map<OP, std::string> OPERATORS = {
 static const std::unordered_set<std::string> BUILTINS = {
   "add", "sub", "mult", "fix"
 };
-
 
 namespace color {
 

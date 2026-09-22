@@ -228,6 +228,10 @@ std::vector<Token> Lexer::tokenize() {
       // Whitespace
 
       case '\n':
+        tokens.push_back( {TokenKind::NEW_LINE, "\n"} );
+        get();
+        break;
+
       case '\t':
       case ' ' :
         get();

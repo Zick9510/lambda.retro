@@ -20,7 +20,15 @@ std::unique_ptr<Block> Parser::parse() {
   Block instr{};
 
   while (peek().kind != TokenKind::END_FILE) {
-    instr.push(_parse_statement());
+
+    try {
+      instr.push(_parse_statement());
+
+    } catch (const std::runtime_error& e) {
+      std::cerr << e.what();
+      sync();
+
+    }
 
   }
 
@@ -34,9 +42,17 @@ bool Parser::is_end() const { return cursor >= tokens.size(); }
 
 Token Parser::prev() const { return cursor > 0 ? tokens[cursor - 1] : error_token; }
 
-Token Parser::peek() const { return is_end() ? tokens.back() : tokens[cursor]; }
+void Parser::_skip_new_lines() {
+  while (!is_end() && tokens[cursor].kind == TokenKind::NEW_LINE) { line++; cursor++; }
+}
+
+Token Parser::peek() {
+  _skip_new_lines();
+  return is_end() ? tokens.back() : tokens[cursor];
+}
 
 Token Parser::get() {
+  _skip_new_lines();
   if (!is_end()) cursor++;
   return prev();
 }
@@ -46,18 +62,33 @@ bool Parser::match(TokenKind kind) {
   return peek().kind == kind;
 }
 
+void Parser::sync() {
+  while (!is_end()) {
+    if (match(TokenKind::SEMICOLON)) { get(); return ; }
+    if (match(TokenKind::FUNC)) { return ;}
+    get();
+  }
+}
+
 Token Parser::check(TokenKind kind) {
   if (match(kind)) return get();
 
-  if (kind == TokenKind::SEMICOLON && config.repl) {
+  if (kind == TokenKind::SEMICOLON) {
 
-    std::cerr << color::RED << "\n[Automatically placed semicolon]\n\n" << color::RESET;
+    if (config.repl) {
+      std::cerr << color::RED << "\n[Automatically placed semicolon]\n\n" << color::RESET;
+
+    } else {
+      std::cerr << color::YELLOW << "[Warning] " << color::RESET << "Expected ';' token. Got '" << peek().lexeme << "' instead\n";
+      std::cerr << config.input_file.value() << ":" << line << '\n';
+
+    }
 
     return Token{TokenKind::SEMICOLON, ";" };
 
   }
 
-  throw std::runtime_error("Error: Se esperaba un tipo de token {" + std::to_string((uint8_t)kind) + ") y se encontró '" + peek().lexeme + "'\n");
+  throw std::runtime_error("Error: Expected '" + KIND_TO_STRING.at(kind) + "' token. Got '" + peek().lexeme + "' instead\n");
 
 }
 
@@ -221,7 +252,7 @@ std::unique_ptr<Expression> Parser::_parse_primary() {
 
   }
 
-  throw std::runtime_error("Error: Expected expression\n");
+  throw std::runtime_error("[Error line:" + std::to_string(line) + "] Expected expression\n");
 
 }
 

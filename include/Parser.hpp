@@ -8,17 +8,23 @@ class Parser {
 private:
 
   uint64_t cursor = 0;
+  uint64_t line   = 1;
   std::vector<Token> tokens;
 
   MainConfig& config;
 
   bool is_end() const;
 
+
   Token prev() const;
 
-  Token peek() const;
+  void _skip_new_lines();
+
+  Token peek();
 
   Token get();
+
+  void sync();
 
   bool match(TokenKind kind);
 

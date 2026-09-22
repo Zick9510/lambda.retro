@@ -1,41 +1,35 @@
-(\x. \y. x) a b;
+, Examples
 
-(\i j k. (j k) (i i) ) c1 c2 c3;
+(\x . x);
 
-(\x y. x);
+\x y . y;
 
-(\x y. x) a;
+(\x . \y . x); , Lambda function
 
-(\x y. x) a b;
+(\x    y . x); , Syntactic sugar for multiple-arguments lambda functions
 
-(lambda f . f f) f1;
+, This is a comment
 
-func R ( f ) { f f }
+(\i j k. (j k) (i i) ) ,This is also a comment, c1 c2 c3; , Expressions are semicolon-terminated
 
-func true  ( x y ) { x }
-func false ( x y ) { y }
+(\x y. x) a; , Lambda function. One argument passed
 
-true false;
+(\x y. x) a b; , Two args passed
 
-true false true;
+(lambda f . f f) f1; , Still a Lambda function. Using the word instead of the symbol
 
-true false true false;
-
-true false true false true;
+func R ( f ) { f f } , Named function declaration
 
 func A ( f g ) { g f }
 
 func B ( f g ) { (A f g) (A f g) }
 
-B a b;
+B a b; , Function call
 
 R a;
 
-2 2 a;
-
-add 1 2;
-
-mult 4 add 3 2;
+add 1 2; , Numbers and Builtins
+sub 3 2;
 mult 4 (add 3 2);
 
 func SUCC (n f x) { f (n f x ) }
@@ -71,7 +65,9 @@ func XOR (a b) { AND (OR a b) (NOT (AND a b)) }
 
 func EQ (a b) { AND (IS_0 (SUB a b)) (IS_0 (SUB b a)) }
 
-ADD (SUB 5 3) (SUB 5 1);
+ADD SUB 5 3 SUB 5 1; , Dear reader: Compare this result
+
+ADD (SUB 5 3) (SUB 5 1); , With this one
 
 func FACT_GEN ( recurse n ) {
 	(
@@ -80,17 +76,17 @@ func FACT_GEN ( recurse n ) {
 				( IS_0 n )
 				( \d . 1 )
 			)
-			( \d .
+			( \d . , Prevent eager evaluation
 				(
 					( MULT n )
 					( recurse ( SUB n 1 ) )
 				)
 			)
-		) 0
+		) 0 , Dummy value. Can be anything
 	)
 }
 
-,func FACT ( n ) { (( Z FACT_GEN ) n ) }
+,func FACT ( n ) { (( Z FACT_GEN ) n ) } ,, Two ways of implementing recursion
 func FACT ( n ) { fix FACT_GEN n }
 
 FACT 3;
@@ -105,7 +101,7 @@ func POWER ( a b f x ) { b a f x } , a ** b
 
 POWER 2 3;
 
-func +14vb/%&%/%a/&aa23t ( a b ) { b a }
+func +14vb/%&%/%a/&aa23t ( a b ) { b a } , Still a named function
 
 +14vb/%&%/%a/&aa23t 2 3;
 
@@ -156,9 +152,9 @@ SUM_LIST [ PAIR | 3 1 4 EMPTY ];
 
 func EMPTY_MAP ( k ) { EMPTY }
 
-,func INSERT ( M key value ) {
-,	\query_key . (EQ query_key key) (value) (M query_key)
-,}
+func INSERT ( M key value ) {
+	\query_key . (EQ query_key key) (value) (M query_key)
+}
 
 (INSERT (INSERT EMPTY_MAP 1 2) 2 3) 1;
 (INSERT (INSERT EMPTY_MAP 1 2) 2 3) 2;
@@ -169,7 +165,7 @@ func M2 ( k ) { INSERT M1 2 3 k }
 func M3 ( k ) { INSERT M2 3 4 k }
 func M4 ( k ) { INSERT M3 2 EMPTY k }
 
-M4;
+M4 1;
 
 M2 2;
 M4 2;
@@ -230,7 +226,7 @@ GET My 3;
 GET (DELETE Mx 2) 2;
 
 func Mz ( d ) {
-	{ PAIR |
+	{ PAIR | , Syntactic sugar for maps
 		0 :  0
 		1 : 10
 		2 : 20
@@ -242,7 +238,7 @@ func Mz ( d ) {
 
 GET Mz 3;
 
-'\0'; '\12'; 'a'; 0b0101; 0o070; 0xffff;
+'\0'; '\12'; 'a'; 0b0101; 0o070; 0xffff; , Every single one is a number
 
 func MAP_REC ( self f list ) {
 	( ( IS_EMPTY list )
@@ -255,8 +251,8 @@ func MAP ( f list ) { MAP_REC MAP_REC f list }
 
 func +1 ( a ) { + a 1 }
 
-(PAIR 1 (PAIR 2 (PAIR 3 (PAIR 4 EMPTY))));
+(PAIR 1 (PAIR 2 (PAIR 3 (PAIR 4 EMPTY)))); , Linked list
 
-[ PAIR | 1 2 3 4 EMPTY ];
+[ PAIR | 1 2 3 4 EMPTY ]; , Syntactic sugar for linked lists
 
 MAP +1 [ PAIR | 1 2 3 4 EMPTY ];
