@@ -1,2 +1,24 @@
+# --- Compilación y Sistema ---
+bin/
+obj/
+.cache/
+.directory
+
+*.o
+*.out
+*.exe
+*.a
+*.so
+
+# --- Archivos de Herramientas y Editores ---
 Session.vim
-compile_comands.json
+compile_commands.json
+
+# --- Archivos Temporales ---
+
+# --- Tests ---
+
+# --- Debugging ---
+core
+vgcore.*
+*.log
