@@ -28,7 +28,7 @@ void Driver::start(MainConfig& config) {
 
     std::unique_ptr<Block> ast = parser.parse();
 
-    Interpreter vm;
+    Interpreter vm(config);
 
     vm.execute(ast.get());
 
@@ -41,7 +41,7 @@ void Driver::start(MainConfig& config) {
 
     Parser parser(config);
 
-    Interpreter vm{};
+    Interpreter vm(config);
 
     std::string source;
 

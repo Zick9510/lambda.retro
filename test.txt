@@ -89,7 +89,7 @@ func FACT_GEN ( recurse n ) {
 ,func FACT ( n ) { (( Z FACT_GEN ) n ) } ,, Two ways of implementing recursion
 func FACT ( n ) { fix FACT_GEN n }
 
-FACT 3;
+FACT 2;
 
 func + ( a b f x ) { ADD a b f x }
 
@@ -240,6 +240,10 @@ GET Mz 3;
 
 '\0'; '\12'; 'a'; 0b0101; 0o070; 0xffff; , Every single one is a number
 
+0xAA_55; 0b0000_1111; , You might want to use underscore to make numbers more readable
+
+04_423_12_523324_2; , It doesn't matter how. No need to keep order here
+
 func MAP_REC ( self f list ) {
 	( ( IS_EMPTY list )
 			( \d . EMPTY )
@@ -249,7 +253,7 @@ func MAP_REC ( self f list ) {
 
 func MAP ( f list ) { MAP_REC MAP_REC f list }
 
-func +1 ( a ) { + a 1 }
+func +1  ( a ) { + a 1 }
 
 (PAIR 1 (PAIR 2 (PAIR 3 (PAIR 4 EMPTY)))); , Linked list
 

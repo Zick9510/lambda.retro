@@ -71,12 +71,14 @@ void Parser::sync() {
 }
 
 Token Parser::check(TokenKind kind) {
+
   if (match(kind)) return get();
 
   if (kind == TokenKind::SEMICOLON) {
 
     if (config.repl) {
-      std::cerr << color::RED << "\n[Automatically placed semicolon]\n\n" << color::RESET;
+      if (config.semicolon_repl_warning)
+        std::cerr << color::RED << "\n[Automatically placed semicolon]\n\n" << color::RESET;
 
     } else {
       std::cerr << color::YELLOW << "[Warning] " << color::RESET << "Expected ';' token. Got '" << peek().lexeme << "' instead\n";

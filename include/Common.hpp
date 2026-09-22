@@ -196,17 +196,17 @@ class ASTVisitor {
 public:
   virtual ~ASTVisitor() = default;
 
-  virtual void visit(ExpressionNat* node) = 0;
-  virtual void visit(ExpressionBuiltin* node) = 0;
+  virtual void visit(const ExpressionNat* node) = 0;
+  virtual void visit(const ExpressionBuiltin* node) = 0;
 
-  virtual void visit(Block* node) = 0;
-  virtual void visit(StatementExpr* node) = 0;
+  virtual void visit(const Block* node) = 0;
+  virtual void visit(const StatementExpr* node) = 0;
 
-  virtual void visit(StatementFuncDecl* node) = 0;
+  virtual void visit(const StatementFuncDecl* node) = 0;
 
-  virtual void visit(LambdaFunction* node) = 0;
-  virtual void visit(LambdaApplication* node) = 0;
-  virtual void visit(LambdaVariable* node) = 0;
+  virtual void visit(const LambdaFunction* node) = 0;
+  virtual void visit(const LambdaApplication* node) = 0;
+  virtual void visit(const LambdaVariable* node) = 0;
 
 };
 
@@ -215,7 +215,7 @@ public:
 
   virtual ~ASTNode() = default;
   virtual void print() const = 0;
-  virtual void accept(ASTVisitor* visitor) = 0;
+  virtual void accept(ASTVisitor* visitor) const = 0;
 
 };
 
@@ -223,8 +223,8 @@ template <typename Base, typename Derived>
 class BaseNode : public Base {
 public:
 
-  void accept(ASTVisitor* visitor) override {
-    visitor->visit(static_cast<Derived*>(this));
+  void accept(ASTVisitor* visitor) const override {
+    visitor->visit(static_cast<const Derived*>(this));
   }
 
   std::unique_ptr<Base> clone() const override {
@@ -495,5 +495,9 @@ struct MainConfig {
   bool print_env = false;
 
   bool repl = false;
+
+  uint64_t show_steps = 0;
+
+  bool semicolon_repl_warning = true;
 
 };

@@ -5,7 +5,7 @@
 #include "Machine.hpp"
 #include "Reduc.hpp"
 
-Interpreter::Interpreter() {
+Interpreter::Interpreter(MainConfig& c) : config(c) {
 
   for (const auto& [b, _] : OPERATORS) {
     env[OPERATORS.at(b)] = std::make_unique<ExpressionBuiltin>(b);
@@ -74,11 +74,31 @@ void Interpreter::execute(const Block* program) {
 
       std::cout << "]\n";
 
-      auto expanded = expand_env(expr->expr.get());
-      auto reduced = BetaReducer::reduceNode(expanded.get());
+      auto current = expand_env(expr->expr.get());
+
+      uint64_t step = 0;
+
+      while (true) {
+
+        auto [did_step, next_expr] = BetaReducer::step(current.get());
+
+        if (!did_step) break;
+
+        current = std::move(next_expr);
+
+        if (config.show_steps && step % config.show_steps == 0) {
+          std::cout << color::YELLOW << " >  " << color::RESET << "[ ";
+          current->print();
+          std::cout << "]\n";
+
+        }
+
+        step++;
+
+      }
 
       std::cout << color::BLUE << " -  " << color::RESET << "[ ";
-      BetaReducer::deepReduce(reduced.get())->print();
+      current->print();
       std::cout << "]\n\n";
 
     }

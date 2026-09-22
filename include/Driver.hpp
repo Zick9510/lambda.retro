@@ -11,8 +11,8 @@ public:
   void start(MainConfig& config);
 
 private:
-  bool _read(std::string& source);
 
+  bool _read(std::string& source);
   std::optional<std::string> readSourceFile(const std::filesystem::path& path) const;
 
 };
