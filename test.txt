@@ -253,6 +253,21 @@ func MAP_REC ( self f list ) {
 
 func MAP ( f list ) { MAP_REC MAP_REC f list }
 
+func FILTER_REC ( self f list ) {
+	( ( IS_EMPTY list )
+		( \d . EMTPY )
+		( \d .
+			( ( f (HEAD list) )
+				( \d2 .  PAIR ( HEAD list ) ( self self f (TAIL list) ))
+				( \d2 . self self f (TAIL list) )
+
+			) 0
+		)
+	) 0
+}
+
+func FILTER ( f list ) { FILTER_REC FILTER_REC f list }
+
 func +1  ( a ) { + a 1 }
 
 (PAIR 1 (PAIR 2 (PAIR 3 (PAIR 4 EMPTY)))); , Linked list
@@ -261,6 +276,144 @@ func +1  ( a ) { + a 1 }
 
 MAP +1 [ PAIR | 1 2 3 4 EMPTY ];
 
-ADD 3 4;
+FILTER (EQ 2) [ PAIR | 1 2 2 3 2 1 2 3 2 3 EMPTY ];
 
-ADD 3 4 f x;
+[ ADD | 2 3 4 5 6 ];
+
+func FOLDR_REC ( self f acc list ) {
+	( ( IS_EMPTY list )
+		( \d . acc )
+		( \d . f ( HEAD list ) ( self self f acc ( TAIL list ) ) )
+	) 0
+}
+
+func FOLDR ( f acc list ) { FOLDR_REC FOLDR_REC f acc list }
+
+func FOLDL_REC ( self f acc list ) {
+	( ( IS_EMPTY list )
+		( \d . acc )
+		( \d . self self f ( f acc ( HEAD list ) ) ( TAIL list ) )
+	) 0
+}
+
+func FOLDL ( f acc list ) { FOLDL_REC FOLDL_REC f acc list }
+
+func INC_ACC ( acc x ) { + acc 1 }
+func LENGTH ( list ) { FOLDL INC_ACC 0 list }
+
+LENGTH [ PAIR | 1 2 3 4 5 0 2 3 EMPTY ];
+
+func APPEND_REC ( self l1 l2 ) {
+	( ( IS_EMPTY l1 )
+			( \d . l2 )
+			( \d . PAIR ( HEAD l1) (self self (TAIL l1) l2 ))
+	) 0
+}
+
+func APPEND ( l1 l2 ) { APPEND_REC APPEND_REC l1 l2 }
+
+APPEND [ PAIR | 1 2 3 EMPTY ] [ PAIR | 4 5 6 EMPTY ];
+
+func ANY_REC ( self f list ) {
+	( ( IS_EMPTY list )
+			( \d . FALSE )
+			( \d .
+				( ( f ( HEAD list ) )
+								( \d2 . TRUE )
+								( \d2 . self self f ( TAIL list ))
+				) 0
+			)
+	) 0
+}
+
+func ANY ( f list ) { ANY_REC ANY_REC f list }
+
+func INDEX_REC ( self list i ) {
+	( ( IS_EMPTY list )
+			( \d . EMPTY )
+			( \d .
+				( ( EQ i 0 )
+					( \d2 . HEAD list )
+					( \d2 . self self ( TAIL list ) ( SUB i 1 ) )
+				) 0
+			)
+	) 0
+}
+
+func INDEX ( list i ) { INDEX_REC INDEX_REC list i }
+
+func REVERSE_STEP ( acc x ) { PAIR x acc }
+func REVERSE ( list ) { FOLDL REVERSE_STEP EMPTY list }
+
+func TAKE_REC ( self list n ) {
+	( ( IS_EMPTY list )
+			( \d . EMPTY )
+			( \d .
+				( ( EQ n 0 )
+					( \d2 . EMPTY )
+					( \d2 . PAIR ( HEAD list ) (self self ( TAIL list ) ( SUB n 1 ) ) )
+				) 0
+			)
+	) 0
+}
+
+func TAKE ( list n ) { TAKE_REC TAKE_REC list n }
+
+func DROP_REC ( self list n ) {
+	( ( IS_EMPTY list )
+			( \d . EMPTY )
+			( \d .
+				( ( EQ n 0 )
+					( \d2 . list )
+					( \d2 . self self ( TAIL list ) ( SUB n 1 ) )
+				) 0
+			)
+	) 0
+}
+
+func DROP ( list n ) { DROP_REC DROP_REC list n }
+
+func SLICE ( list a b ) { TAKE ( DROP list a ) b }
+
+func SET_REC ( self list i v ) {
+	( ( IS_EMPTY list )
+			( \d . EMPTY )
+			( \d .
+				( ( EQ i 0 )
+						( \d2 . PAIR v ( TAIL list ) )
+						( \d2 . PAIR ( HEAD list ) ( self self ( TAIL list ) ( SUB i 1 ) v ) )
+				) 0
+			)
+	) 0
+}
+
+func SET ( list i v ) { SET_REC SET_REC list i v }
+
+func INSERT_AT_REC ( self list i v ) {
+	( ( IS_EMPTY list )
+			( \d . ( ( EQ i 0 ) ( \d2 . PAIR v EMPTY ) ( \d2 . EMPTY ) ) 0 )
+			( \d .
+				( ( EQ i 0 )
+					( \d2 . PAIR v list )
+					( \d2 . PAIR ( HEAD list ) ( self self ( TAIL list ) ( SUB i 1 ) v ) )
+				) 0
+			)
+	) 0
+}
+
+func INSERT_AT ( list i v ) { INSERT_AT_REC INSERT_AT_REC list i v }
+
+func REMOVE_REC ( self list i ) {
+	( ( IS_EMPTY list )
+			( \d . EMPTY )
+			( \d .
+				( ( EQ i 0 )
+					( \d2 . TAIL list )
+					( \d2 . PAIR ( HEAD list ) ( self self ( TAIL list ) ( SUB i 1 ) ) )
+				) 0
+			)
+	) 0
+}
+
+func REMOVE ( list i ) { REMOVE_REC REMOVE_REC list i }
+
