@@ -2,6 +2,8 @@
 
 #include "Parser.hpp"
 
+#include "Lexer.hpp"
+
 #include "Common.hpp"
 
 // Public
@@ -22,7 +24,13 @@ std::unique_ptr<Block> Parser::parse() {
   while (peek().kind != TokenKind::END_FILE) {
 
     try {
-      instr.push(_parse_statement());
+      if (match(TokenKind::IMPORT)) {
+        _parse_import(instr);
+
+      } else {
+        instr.push(_parse_statement());
+
+      }
 
     } catch (const std::runtime_error& e) {
       std::cerr << e.what();
@@ -134,7 +142,7 @@ NodeId Parser::_parse_application() {
 
   NodeId expr = _parse_composition();
 
-  while (match(TokenKind::LAMBDA) || match(TokenKind::IDENTIFIER) || match(TokenKind::NUMBER  ) ||
+  while (match(TokenKind::LAMBDA) || match(TokenKind::IDENTIFIER) || match(TokenKind::NUMBER  ) || match(TokenKind::STRING) ||
          match(TokenKind::LPAREN) || match(TokenKind::LCURLY    ) || match(TokenKind::LBRACKET) ) {
 
     NodeId arg = _parse_composition();
@@ -190,7 +198,15 @@ NodeId Parser::_parse_primary() {
 
     while (peek().kind != TokenKind::RBRACKET && peek().kind != TokenKind::END_FILE) {
 
-      elements.push_back(_parse_primary());
+      if (match(TokenKind::STRING)) {
+        std::string str = get().lexeme;
+        for (char c : str) {
+          elements.push_back(arena.alloc( Nat { (uint64_t)(unsigned char)c } ) );
+        }
+      } else {
+        elements.push_back(_parse_primary());
+
+      }
 
     }
 
@@ -341,6 +357,40 @@ std::unique_ptr<Statement> Parser::_parse_function_declaration() {
 
 }
 
+void Parser::_parse_import(Block& current_block) {
+
+  std::cout << "362 _parse_import\n";
+
+  check(TokenKind::IMPORT);
+  std::string filename = check(TokenKind::STRING).lexeme;
+  std::cout << "filename: '" << filename << "'\n";
+  check(TokenKind::SEMICOLON);
+
+  if (config.imported_files.count(filename) == 0) {
+    config.imported_files.insert(filename);
+
+    std::ifstream file(filename);
+    if (!file.is_open()) {
+      throw std::runtime_error("Error: Could not open improted file '" + filename + "'\n");
+    }
+
+    std::stringstream buffer;
+    buffer << file.rdbuf();
+
+    Lexer _lexer(buffer.str());
+    std::vector<Token> _tokens = _lexer.tokenize();
+
+    Parser _parser(_tokens, arena, config);
+    std::unique_ptr<Block> _block = _parser.parse();
+
+    for (auto& inst : _block->instr) {
+      current_block.push(std::move(inst));
+    }
+
+  }
+
+}
+
 NodeId Parser::_parse_pipe() {
 
   NodeId expr = _parse_application();
@@ -370,8 +420,6 @@ NodeId Parser::_parse_pipe() {
     }
 
     expr = new_expr;
-
-    //expr = arena.alloc( App { rhs, expr } );
 
   }
 

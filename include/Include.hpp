@@ -16,6 +16,8 @@
 #include <readline/readline.h>
 #include <readline/history.h>
 
+#include <sstream>
+
 #include <string>
 #include <string_view>
 

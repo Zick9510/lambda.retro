@@ -163,7 +163,7 @@ void print_node(Arena& arena, NodeId node_id, uint32_t depth) {
   uint64_t church_val = 0;
 
   if (get_church_value(arena, node_id, church_val)) {
-    std::cout << color::NUMBER << church_val << ' ' << color::RESET;
+    std::cout << color::NUMBER << church_val << color::RESET << ' ';
     return ;
   }
 
@@ -235,12 +235,11 @@ void print_node(Arena& arena, NodeId node_id, uint32_t depth) {
     std::string param_name = get_name(depth);
     std::cout << '(' << color::LAMBDA << " λ " << color::RESET << param_name << color::SYM << " . " << color::RESET;
     print_node(arena, f->body, depth + 1);
-    std::cout << ") ";
+    std::cout << ')';
 
   } else if (auto* a = std::get_if<App>(&node.data)) {
     std::cout << "( ";
     print_node(arena, a->func, depth);
-    std::cout << ' ';
     print_node(arena, a->arg , depth);
     std::cout << ')';
 

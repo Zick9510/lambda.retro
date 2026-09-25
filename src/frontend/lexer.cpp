@@ -155,9 +155,57 @@ void Lexer::_handle_char() {
     t.lexeme = std::to_string(n);
     tokens.push_back(t);
 
-   }
+  }
 
   if (current() == '\'') { get(); }
+
+}
+
+void Lexer::_handle_string() {
+
+  get(); // "
+
+  std::string result = "";
+
+  while (!is_end() && current() != '"') {
+
+    if (current() == '\\') {
+      get();
+
+      switch (current()) {
+
+        case 'n' : result += '\n'; break;
+        case 't' : result += '\t'; break;
+        case 'r' : result += '\r'; break;
+        case '"' : result += '"' ; break;
+        case '\\': result += '\\'; break;
+
+        default:
+        result += '\\';
+        result += current();
+        get();
+        break;
+
+      }
+
+    } else {
+
+      result += current();
+      get();
+
+    }
+  }
+
+  if (is_end()) {
+    throw std::runtime_error("Error: Unterminated string literal");
+  }
+
+  get(); // "
+
+  tokens.push_back({
+    TokenKind::STRING,
+    result
+  });
 
 }
 
@@ -218,6 +266,11 @@ std::vector<Token> Lexer::tokenize() {
 
     if (current() == '\'') {
       _handle_char();
+      continue;
+    }
+
+    if (current() == '"') {
+      _handle_string();
       continue;
     }
 

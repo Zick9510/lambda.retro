@@ -437,12 +437,18 @@ func *3 ( a ) { MULT a 3 }
 
 *3 (+2 1);
 
-*3 . +2 1;
-
-,[ PAIR | "Hello" EMPTY ];
+*3 . +2 1; , Function composition // f . g . h . x -> (f ( g ( h x ) ) )
 
 MAP [ PAIR | 1 (2 3) 3 4 EMPTY ] +1;
 
 MAP (MAP [ PAIR | 1 2 3 4 EMPTY ] +1) *3;
 
-[ PAIR | 1 2 3 4 EMPTY ] | MAP +1 | MAP *3;
+[ PAIR | 1 2 3 4 EMPTY ] | MAP +1 | MAP *3; , previous expression servers as the following's first argument
+
+[ PAIR | 1 2 3 4 EMPTY ] | MAP FACT . +1;
+
+[ PAIR | "Howdy" EMPTY ];
+
+import "test2.txt";
+
+SWAP 2 3;

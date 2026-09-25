@@ -1,0 +1,1 @@
+func SWAP ( a b ) { b a }

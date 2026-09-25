@@ -27,7 +27,7 @@ private:
   void _read_word();
 
   void _handle_char();
-
+  void _handle_string();
 
 public:
 

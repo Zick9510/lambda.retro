@@ -54,6 +54,8 @@ private:
 
   std::unique_ptr<Statement>  _parse_function_declaration();
 
+  void _parse_import(Block& current_block);
+
   NodeId _parse_pipe();
 
   NodeId _parse_composition();

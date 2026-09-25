@@ -8,6 +8,7 @@ enum class TokenKind : uint8_t {
 
   IDENTIFIER, // Identifiers, variables, etc.
   NUMBER    , // Numbers, floats, etc.
+  STRING    ,
 
   LAMBDA    , // \ / lambda
 
@@ -34,6 +35,7 @@ enum class TokenKind : uint8_t {
   // Keywords
   //LAMBDA // This was previously defined
   FUNC,
+  IMPORT,
 
   // Builtins
 
@@ -75,6 +77,8 @@ static const std::unordered_map<TokenKind, std::string> KIND_TO_STRING = {
   { TokenKind::ERROR, "[ERROR]" },
 
   { TokenKind::FUNC, "func" },
+
+  { TokenKind::IMPORT, "import" }
 
 };
 
@@ -158,6 +162,7 @@ static const std::unordered_map<std::string, TokenKind> KEYWORDS = {
 
   {"func"  , TokenKind::FUNC  },
   {"lambda", TokenKind::LAMBDA},
+  {"import", TokenKind::IMPORT},
 
 };
 
@@ -331,5 +336,7 @@ struct MainConfig {
   uint64_t show_steps = 0;
 
   bool semicolon_repl_warning = true;
+
+  std::unordered_set<std::string> imported_files{};
 
 };
