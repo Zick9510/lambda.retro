@@ -75,7 +75,7 @@ void Interpreter::execute(const Block* program) {
 
       std::cout << ") : { ";
 
-      print_ast(arena, decl->body);
+      print_node(arena, decl->body);
 
       std::cout << "} ]\n\n";
 
@@ -83,7 +83,7 @@ void Interpreter::execute(const Block* program) {
 
       std::cout << color::RED << " *  " << color::RESET << "[ ";
 
-      print_ast(arena, expr->expr);
+      print_node(arena, expr->expr);
 
       std::cout << "]\n";
 
@@ -103,7 +103,7 @@ void Interpreter::execute(const Block* program) {
 
         if (config.show_steps && step % config.show_steps == 0) {
           std::cout << color::YELLOW << " >  " << color::RESET << "[ ";
-          print_ast(arena, current);
+          print_node(arena, current);
           std::cout << "]\n";
         }
 
@@ -114,7 +114,7 @@ void Interpreter::execute(const Block* program) {
       auto printable = reducer.deepReduce(arena, current);
 
       std::cout << color::BLUE << " -  " << color::RESET << "[ ";
-      print_ast(arena, printable);
+      print_node(arena, printable);
       std::cout << "]\n\n";
 
     }
@@ -131,7 +131,7 @@ void Interpreter::print() const {
 
   for (const auto& [name, expr] : env) {
     std::cout << name << " = ";
-    print_ast(const_cast<Arena&>(arena), expr);
+    print_node(const_cast<Arena&>(arena), expr);
     std::cout << '\n';
   }
 

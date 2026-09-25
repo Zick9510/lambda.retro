@@ -183,42 +183,11 @@ struct Token {
 
 static const Token error_token = Token { TokenKind::ERROR, "error" };
 
-class ExpressionNat;
-class ExpressionBuiltin;
-
-class Block;
-class StatementExpr;
-
-class StatementFuncDecl;
-
-class LambdaFunction;
-class LambdaApplication;
-class LambdaVariable;
-
-class ASTVisitor {
-public:
-  virtual ~ASTVisitor() = default;
-
-  virtual void visit(const ExpressionNat* node) = 0;
-  virtual void visit(const ExpressionBuiltin* node) = 0;
-
-  virtual void visit(const Block* node) = 0;
-  virtual void visit(const StatementExpr* node) = 0;
-
-  virtual void visit(const StatementFuncDecl* node) = 0;
-
-  virtual void visit(const LambdaFunction* node) = 0;
-  virtual void visit(const LambdaApplication* node) = 0;
-  virtual void visit(const LambdaVariable* node) = 0;
-
-};
-
 class ASTNode {
 public:
 
   virtual ~ASTNode() = default;
   virtual void print() const = 0;
-  virtual void accept(ASTVisitor* visitor) const = 0;
 
 };
 
@@ -226,21 +195,9 @@ template <typename Base, typename Derived>
 class BaseNode : public Base {
 public:
 
-  void accept(ASTVisitor* visitor) const override {
-    visitor->visit(static_cast<const Derived*>(this));
-  }
-
   std::unique_ptr<Base> clone() const override {
     return std::make_unique<Derived>(static_cast<const Derived&>(*this));
   }
-
-};
-
-class Expression : public ASTNode {
-public:
-  virtual std::unique_ptr<Expression> clone() const = 0;
-  virtual std::unique_ptr<Expression> substitute(const std::string& var, const Expression* replacement) const = 0;
-  virtual bool contains(const std::string& var) const { return false; };
 
 };
 
@@ -284,76 +241,6 @@ public:
 std::string _clean_str(const std::string& str);
 
 uint64_t _parse_str(const std::string& str);
-
-class ExpressionNat : public BaseNode<Expression, ExpressionNat> {
-private:
-
-  static std::string _clean_str(const std::string& str) {
-
-    std::string clean;
-
-    for (const auto& c : str) {
-      if (c != '_') { clean += c; }
-    }
-
-    return clean;
-
-  }
-
-  static uint64_t _parse_str(const std::string& str) {
-    if      (str.find("0x", 0) == 0) { return std::stoll(str.substr(2), nullptr, 16); }
-    else if (str.find("0b", 0) == 0) { return std::stoll(str.substr(2), nullptr,  2); }
-    else if (str.find("0o", 0) == 0) { return std::stoll(str.substr(2), nullptr,  8); }
-
-    else                                     { return std::stoll(str, nullptr, 10); }
-
-  }
-
-public:
-  uint64_t value;
-
-  ExpressionNat(const std::string& v) : value(_parse_str(_clean_str(v))) {}
-
-  ExpressionNat(uint64_t v) : value(v) {}
-
-  ExpressionNat(const ExpressionNat& other) : value(other.value) {}
-
-  void print() const override {
-    std::cout << color::NUMBER << value << ' ' << color::RESET;
-  }
-
-  std::unique_ptr<Expression> clone() const override {
-    return std::make_unique<ExpressionNat>(value);
-  }
-
-  std::unique_ptr<Expression> substitute(const std::string& var, const Expression* replacement) const override {
-    return clone();
-  }
-
-};
-
-class ExpressionBuiltin : public BaseNode<Expression, ExpressionBuiltin> {
-public:
-  OP op;
-
-  ExpressionBuiltin(OP o) : op(o) {}
-
-  ExpressionBuiltin(const ExpressionBuiltin& other) : op(other.op) {}
-
-  void print() const override {
-    std::cout << color::BLUE << "<builtin: " << color::B_BLUE << OPERATORS.at(op) << color::BLUE << "> " << color::RESET;
-
-  }
-
-  std::unique_ptr<Expression> clone() const override {
-    return std::make_unique<ExpressionBuiltin>(op);
-  }
-
-  std::unique_ptr<Expression> substitute(const std::string& var, const Expression* replacement) const override {
-    return clone();
-  }
-
-};
 
 class Statement : public ASTNode {
 public:
@@ -426,111 +313,9 @@ public:
 
 };
 
-// Lambdas
-
-class LambdaVariable : public BaseNode<Expression, LambdaVariable> {
-public:
-
-  std::string name;
-
-  LambdaVariable(std::string n);
-
-  LambdaVariable(const LambdaVariable& other);
-
-  void print() const override;
-
-  std::unique_ptr<Expression> clone() const override;
-
-  std::unique_ptr<Expression> substitute(const std::string& var, const Expression* replacement) const override;
-
-  bool contains(const std::string& var) const override;
-
-};
-
-class LambdaApplication : public BaseNode<Expression, LambdaApplication> {
-public:
-
-  std::unique_ptr<Expression> func;
-  std::unique_ptr<Expression> arg ;
-
-  LambdaApplication(
-
-    std::unique_ptr<Expression> f, // func
-    std::unique_ptr<Expression> a  // arg
-
-  );
-
-  LambdaApplication(const LambdaApplication& other);
-
-private:
-
-  static bool are_ast_equal(const Expression* a, const Expression* b);
-
-  static bool _is_same_combiner(const Expression* a, const Expression* b);
-
-  struct ListData;
-
-  ListData _extract_list() const;
-
-  bool _is_map(const ListData& data) const;
-
-  void _print_as_list(const ListData& data) const;
-
-  void _print_as_map(const ListData& data) const;
-
-public:
-
-  void print() const override;
-
-  std::unique_ptr<Expression> clone() const override;
-
-  std::unique_ptr<Expression> substitute(const std::string& var, const Expression* replacement) const override;
-
-  bool contains(const std::string& var) const override;
-
-};
-
-class LambdaFunction : public BaseNode<Expression, LambdaFunction> {
-public:
-
-  std::vector<std::string> args;
-
-  NodeId body;
-
-  LambdaFunction(
-
-    std::vector<std::string>    a, // args
-    NodeId b  // body
-
-  );
-
-  LambdaFunction(const LambdaFunction& other);
-
-private:
-
-  static int _check_church(const Expression* expr, const std::string& f, const std::string& x);
-
-  static int _get_church_value(const std::vector<std::string>& args, const Expression* body);
-
-  struct ReducedData;
-
-  static ReducedData _extract_reduced_list(const LambdaFunction* func);
-
-public:
-
-  void print() const override;
-
-  std::unique_ptr<Expression> clone() const override;
-
-  std::unique_ptr<Expression> substitute(const std::string& var, const Expression* replacement) const override;
-
-  bool contains(const std::string& var) const override;
-
-};
-
 std::string get_name(uint32_t depth);
 
-void print_ast(Arena& arena, NodeId node_id, uint32_t depth = 0);
+void print_node(Arena& arena, NodeId node_id, uint32_t depth = 0);
 
 /* --- Config --- */
 
