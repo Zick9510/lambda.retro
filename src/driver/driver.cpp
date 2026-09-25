@@ -20,15 +20,15 @@ void Driver::start(MainConfig& config) {
       return ;
     }
 
+    Interpreter vm(config);
+
     Lexer lexer(source.value());
 
     std::vector<Token> tokens = lexer.tokenize();
 
-    Parser parser(tokens, config);
+    Parser parser(tokens, vm.arena, config);
 
     std::unique_ptr<Block> ast = parser.parse();
-
-    Interpreter vm(config);
 
     vm.execute(ast.get());
 
@@ -37,11 +37,11 @@ void Driver::start(MainConfig& config) {
 
   } else { // REPL
 
+    Interpreter vm(config);
+
     Lexer lexer{};
 
-    Parser parser(config);
-
-    Interpreter vm(config);
+    Parser parser(vm.arena, config);
 
     std::string source;
 

@@ -9,11 +9,13 @@ private:
 
   MainConfig& config;
 
-  std::unordered_map<std::string, std::unique_ptr<Expression>> env;
+  std::unordered_map<std::string, NodeId> env;
 
-  std::unique_ptr<Expression> expand_env(const Expression* expr);
+  NodeId expand_env(NodeId expr);
 
 public:
+
+  Arena arena;
 
   Interpreter(MainConfig& c);
 

@@ -4,30 +4,23 @@
 
 #include "Common.hpp"
 
-class BetaReducer : ASTVisitor {
+class BetaReducer {
 private:
 
   bool did_step = false;
   std::unique_ptr<Expression> next = nullptr;
 
+  NodeId shift(Arena& arena, NodeId node_id, int amount, uint32_t cutoff = 0);
+
 public:
 
   BetaReducer();
 
-  std::pair<bool, std::unique_ptr<Expression>> step(const Expression* node);
+  std::pair<bool, NodeId> step(Arena& arena, NodeId node);
 
-  std::unique_ptr<Expression> deepReduce(const Expression* node);
+  NodeId substitute(Arena& arena, NodeId node_id, NodeId arg_id, uint32_t depth);
+
+  NodeId deepReduce(Arena& arena, NodeId node_id);
   static std::unique_ptr<Expression> reduceNode(const Expression* node);
-
-  void visit(const LambdaVariable   * node) override;
-  void visit(const LambdaApplication* node) override;
-  void visit(const LambdaFunction   * node) override;
-
-  void visit(const ExpressionNat    * node) override;
-  void visit(const ExpressionBuiltin* node) override;
-
-  void visit(const Block            * node) override { throw std::runtime_error("Cannot reduce Block"); }
-  void visit(const StatementExpr    * node) override { throw std::runtime_error("Cannot reduce Statement"); }
-  void visit(const StatementFuncDecl* node) override { throw std::runtime_error("Cannot reduce Function Declaration"); }
 
 };

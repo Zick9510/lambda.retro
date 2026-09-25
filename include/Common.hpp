@@ -112,7 +112,10 @@ namespace color {
   static const std::string MAGENTA = "\033[35m"; static const std::string B_MAGENTA = "\033[95m";
   static const std::string CYAN    = "\033[36m"; static const std::string B_CYAN    = "\033[96m";
 
+  static const std::string LAMBDA  = GREEN;
+  static const std::string SYM     = RED  ;
   static const std::string NUMBER  = B_RED;
+  static const std::string BUILTIN = BLUE ;
 
 };
 
@@ -241,6 +244,47 @@ public:
 
 };
 
+using NodeId = uint32_t;
+constexpr NodeId NULL_NODE = 0xffffffff;
+
+struct Global  { std::string name; };
+struct Var     { uint32_t index; };
+struct App     { NodeId func; NodeId arg; };
+struct Func    { NodeId body; };
+struct Nat     { uint64_t value; };
+struct Builtin { OP op; };
+
+struct EnvNode { NodeId value; NodeId next_env; };
+struct Closure { NodeId body ; NodeId      env; };
+
+struct Indirection { NodeId target; };
+
+using NodeVariant = std::variant<Global, Var, App, Func, Nat, Builtin, EnvNode, Closure, Indirection>;
+
+struct Node { NodeVariant data; };
+
+class Arena {
+private:
+  std::vector<Node> pool;
+
+public:
+  Arena() { pool.reserve(0xffff); }
+
+  template <typename T>
+  NodeId alloc(T&& data) {
+    NodeId id = pool.size();
+    pool.push_back(Node{std::forward<T>(data)});
+    return id;
+  }
+
+  Node& get(NodeId id) { return pool[id]; }
+
+};
+
+std::string _clean_str(const std::string& str);
+
+uint64_t _parse_str(const std::string& str);
+
 class ExpressionNat : public BaseNode<Expression, ExpressionNat> {
 private:
 
@@ -345,17 +389,16 @@ public:
 
 class StatementExpr : public BaseNode<Statement, StatementExpr> {
 public:
-	std::unique_ptr<Expression> expr;
+	NodeId expr;
 
-	StatementExpr(std::unique_ptr<Expression> e)
-		: expr(std::move(e)) {}
+	StatementExpr(NodeId e)
+		: expr(e) {}
 
 	StatementExpr(const StatementExpr& other)
-		: expr(other.expr->clone()) {}
+		: expr(other.expr) {}
 
 	void print() const override {
-    expr->print();
-
+    std::cout << expr << ' ';
 	}
 
 };
@@ -366,18 +409,18 @@ public:
 
   std::vector<std::string> args;
 
-  std::unique_ptr<Expression> body;
+  NodeId body;
 
   StatementFuncDecl(
 
     std::string n,
     std::vector<std::string> a,
-    std::unique_ptr<Expression> b
+    NodeId b
 
-  ) : name(n), args(a), body(std::move(b)) {}
+  ) : name(n), args(a), body(b) {}
 
   StatementFuncDecl(const StatementFuncDecl& other)
-    : name(other.name), args(other.args), body(other.body->clone()) {}
+    : name(other.name), args(other.args), body(other.body) {}
 
   void print() const override {}
 
@@ -452,12 +495,12 @@ public:
 
   std::vector<std::string> args;
 
-  std::unique_ptr<Expression> body;
+  NodeId body;
 
   LambdaFunction(
 
     std::vector<std::string>    a, // args
-    std::unique_ptr<Expression> b  // body
+    NodeId b  // body
 
   );
 
@@ -484,6 +527,10 @@ public:
   bool contains(const std::string& var) const override;
 
 };
+
+std::string get_name(uint32_t depth);
+
+void print_ast(Arena& arena, NodeId node_id, uint32_t depth = 0);
 
 /* --- Config --- */
 

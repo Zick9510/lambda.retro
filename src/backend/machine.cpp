@@ -7,42 +7,55 @@
 
 Interpreter::Interpreter(MainConfig& c) : config(c) {
 
-  for (const auto& [b, _] : OPERATORS) {
-    env[OPERATORS.at(b)] = std::make_unique<ExpressionBuiltin>(b);
+  for (const auto& [b, op] : OPERATORS) {
+    env[op] = arena.alloc( Builtin { b } );
   }
 
 };
 
 // private
 
-std::unique_ptr<Expression> Interpreter::expand_env(const Expression* expr) {
+NodeId Interpreter::expand_env(NodeId expr) {
 
-  if (auto var = dynamic_cast<const LambdaVariable*>(expr)) {
+  const Node& node = arena.get(expr);
+
+  if (auto var = std::get_if<Global>(&node.data)) {
+
     auto it = env.find(var->name);
-    if (it != env.end()) return expand_env(it->second.get());
-    return var->clone();
+
+    if (it != env.end()) {
+      return it->second;
+    }
+
+    throw std::runtime_error("Error: Undefined variable '" + var->name + "'\n");
+
   }
 
-  if (auto func = dynamic_cast<const LambdaFunction*>(expr)) {
-    return std::make_unique<LambdaFunction>(func->args, expand_env(func->body.get()));
+  if (auto func = std::get_if<Func>(&node.data)) {
+
+    NodeId body_id = func->body;
+
+    return arena.alloc( Func { expand_env(body_id) } );
   }
 
-  if (auto app = dynamic_cast<const LambdaApplication*>(expr)) {
-    return std::make_unique<LambdaApplication>(
-      expand_env(app->func.get()),
-      expand_env(app->arg .get())
-    );
+  if (auto app = std::get_if<App>(&node.data)) {
+
+    NodeId func_id = app->func;
+    NodeId  arg_id = app-> arg;
+
+    NodeId new_func = expand_env(func_id);
+    NodeId new_arg  = expand_env(arg_id );
+
+    return arena.alloc( App { new_func, new_arg } );
   }
 
-  if (auto num = dynamic_cast<const ExpressionNat*>(expr)) {
-    return num->clone();
+  if (std::holds_alternative<Var>    (node.data) ||
+      std::holds_alternative<Nat>    (node.data) ||
+      std::holds_alternative<Builtin>(node.data)) {
+    return expr;
   }
 
-  if (auto builtin = dynamic_cast<const ExpressionBuiltin*>(expr)) {
-    return builtin->clone();
-  }
-
-  return nullptr;
+  return NULL_NODE;
 
 }
 
@@ -53,8 +66,8 @@ void Interpreter::execute(const Block* program) {
   for (const auto& stmt : program->instr) {
 
     if (auto decl = dynamic_cast<const StatementFuncDecl*>(stmt.get())) {
-      auto lambda = std::make_unique<LambdaFunction>(decl->args, decl->body->clone());
-      env[decl->name] = std::move(lambda);
+
+      env[decl->name] = expand_env(decl->body);
 
       std::cout << color::GREEN << " λ  " << color::RESET << "[ " << get_color(decl->name) << decl->name << color::RESET << " ( ";
 
@@ -62,7 +75,7 @@ void Interpreter::execute(const Block* program) {
 
       std::cout << ") : { ";
 
-      decl->body->print();
+      print_ast(arena, decl->body);
 
       std::cout << "} ]\n\n";
 
@@ -70,11 +83,11 @@ void Interpreter::execute(const Block* program) {
 
       std::cout << color::RED << " *  " << color::RESET << "[ ";
 
-      expr->expr->print();
+      print_ast(arena, expr->expr);
 
       std::cout << "]\n";
 
-      auto current = expand_env(expr->expr.get());
+      NodeId current = expand_env(expr->expr);
 
       uint64_t step = 0;
 
@@ -82,15 +95,15 @@ void Interpreter::execute(const Block* program) {
 
       while (true) {
 
-        auto [did_step, next_expr] = reducer.step(current.get());
+        auto [did_step, next_expr] = reducer.step(arena, current);
 
         if (!did_step) break;
 
-        current = std::move(next_expr);
+        current = next_expr;
 
         if (config.show_steps && step % config.show_steps == 0) {
           std::cout << color::YELLOW << " >  " << color::RESET << "[ ";
-          current->print();
+          print_ast(arena, current);
           std::cout << "]\n";
         }
 
@@ -98,10 +111,10 @@ void Interpreter::execute(const Block* program) {
 
       }
 
-      auto printable = reducer.deepReduce(current.get());
+      auto printable = reducer.deepReduce(arena, current);
 
       std::cout << color::BLUE << " -  " << color::RESET << "[ ";
-      printable->print();
+      print_ast(arena, printable);
       std::cout << "]\n\n";
 
     }
@@ -118,7 +131,7 @@ void Interpreter::print() const {
 
   for (const auto& [name, expr] : env) {
     std::cout << name << " = ";
-    expr->print();
+    print_ast(const_cast<Arena&>(arena), expr);
     std::cout << '\n';
   }
 

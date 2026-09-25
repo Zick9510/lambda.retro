@@ -12,9 +12,11 @@ private:
   std::vector<Token> tokens;
 
   MainConfig& config;
+  Arena& arena;
+
+  std::vector<std::string> scope_stack;
 
   bool is_end() const;
-
 
   Token prev() const;
 
@@ -32,9 +34,9 @@ private:
 
 public:
 
-  Parser(MainConfig& c);
+  Parser(Arena& a, MainConfig& c);
 
-  Parser(std::vector<Token> t, MainConfig& c);
+  Parser(std::vector<Token> t, Arena& a, MainConfig& c);
 
   void set_tokens(std::vector<Token> t);
 
@@ -46,9 +48,9 @@ private:
 
   std::unique_ptr<Statement>  _parse_statement();
 
-  std::unique_ptr<Expression> _parse_expression();
+  NodeId _parse_expression();
 
-  std::unique_ptr<Expression> _parse_primary();
+  NodeId _parse_primary();
 
   std::unique_ptr<Statement>  _parse_function_declaration();
 

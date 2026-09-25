@@ -10,29 +10,29 @@
 
 , This is a comment
 
-(\i j k. (j k) (i i) ) ,This is also a comment, c1 c2 c3; , Expressions are semicolon-terminated
+(\i j k. (j k) (i i) ) ,This is also a comment, 1 2 3; , Expressions are semicolon-terminated
 
-(\x y. x) a; , Lambda function. One argument passed
+(\x y. x) 1; , Lambda function. One argument passed
 
-(\x y. x) a b; , Two args passed
+(\x y. x) 1 2; , Two args passed
 
-(lambda f . f f) f1; , Still a Lambda function. Using the word instead of the symbol
+(lambda f . f ) 1; , Still a Lambda function. Using the word instead of the symbol
 
-func R ( f ) { f f } , Named function declaration
+func R ( f ) { f } , Named function declaration
 
 func A ( f g ) { g f }
 
 func B ( f g ) { (A f g) (A f g) }
 
-B a b; , Function call
+B 3 4; , Function call
 
-R a;
+R 1;
 
-add 1 2; , Numbers and Builtins
+add 1 2;
 sub 3 2;
 mult 4 (add 3 2);
 
-func SUCC (n f x) { f (n f x ) }
+func SUCC (n f x) { f ( n f x ) }
 
 func Z ( f ) { (\x . f (\v . x x v)) (\x . f (\v . x x v)) }
 
@@ -158,7 +158,7 @@ func SUM_LIST_GEN (recurse l) {
 	) 0
 }
 
-,func SUM_LIST ( l ) { fix SUM_LIST_GEN l }
+func SUM_LIST ( l ) { fix SUM_LIST_GEN l }
 
 SUM_LIST ( PAIR 2 ( PAIR 7 ( PAIR 1 EMPTY ) ) );
 
@@ -270,7 +270,7 @@ func MAP ( f list ) { MAP_REC MAP_REC f list }
 
 func FILTER_REC ( self f list ) {
 	( ( IS_EMPTY list )
-		( \d . EMTPY )
+		( \d . EMPTY )
 		( \d .
 			( ( f (HEAD list) )
 				( \d2 .  PAIR ( HEAD list ) ( self self f (TAIL list) ))

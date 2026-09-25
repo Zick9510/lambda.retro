@@ -6,9 +6,9 @@
 
 // Public
 
-Parser::Parser(MainConfig& c) : config(c) {}
+Parser::Parser(Arena& a, MainConfig& c) : arena(a), config(c) {}
 
-Parser::Parser(std::vector<Token> t, MainConfig& c) : tokens(t), config(c) {}
+Parser::Parser(std::vector<Token> t, Arena& a, MainConfig& c) : tokens(t), arena(a), config(c) {}
 
 void Parser::set_tokens(std::vector<Token> t) {
   cursor = 0;
@@ -94,7 +94,7 @@ Token Parser::check(TokenKind kind) {
 
 }
 
-std::unique_ptr<Expression> Parser::_parse_expression() {
+NodeId Parser::_parse_expression() {
 
   if (match(TokenKind::LAMBDA)) {
     get();
@@ -102,24 +102,37 @@ std::unique_ptr<Expression> Parser::_parse_expression() {
     std::vector<std::string> args = { check(TokenKind::IDENTIFIER).lexeme };
 
     while (peek().kind == TokenKind::IDENTIFIER) {
-
       args.push_back(get().lexeme);
+    }
+
+    for (const auto& arg : args) {
+      scope_stack.push_back(arg);
 
     }
 
     check(TokenKind::DOT);
-    auto body = _parse_expression();
-    return std::make_unique<LambdaFunction>(args, std::move(body));
+    NodeId body = _parse_expression();
+    NodeId expr = body;
+
+    for (size_t i = 0; i < args.size(); ++i) {
+      scope_stack.pop_back();
+    }
+
+    for (size_t i = 0; i < args.size(); ++i) {
+      expr = arena.alloc( Func { expr } );
+    }
+
+    return expr;
 
   }
 
-  auto expr = _parse_primary();
+  NodeId expr = _parse_primary();
 
-  while (match(TokenKind::LAMBDA) || match(TokenKind::IDENTIFIER) || match(TokenKind::NUMBER  )||
-         match(TokenKind::LPAREN) || match(TokenKind::LCURLY    ) || match(TokenKind::LBRACKET)) {
+  while (match(TokenKind::LAMBDA) || match(TokenKind::IDENTIFIER) || match(TokenKind::NUMBER  ) ||
+         match(TokenKind::LPAREN) || match(TokenKind::LCURLY    ) || match(TokenKind::LBRACKET) ) {
 
-    auto arg = _parse_primary();
-    expr = std::make_unique<LambdaApplication>(std::move(expr), std::move(arg));
+    NodeId arg = _parse_primary();
+    expr = arena.alloc( App { expr, arg } );
 
   }
 
@@ -127,35 +140,47 @@ std::unique_ptr<Expression> Parser::_parse_expression() {
 
 }
 
-std::unique_ptr<Expression> Parser::_parse_primary() {
+NodeId Parser::_parse_primary() {
 
-  if (peek().kind == TokenKind::LAMBDA) {
+  if (match(TokenKind::LAMBDA)) {
     return _parse_expression();
+
   }
 
   if (match(TokenKind::IDENTIFIER)) {
-    return std::make_unique<LambdaVariable>(get().lexeme);
+    std::string name = get().lexeme;
+
+    for (int32_t i = scope_stack.size() - 1; i >= 0; --i) {
+      if (scope_stack[i] == name) {
+        uint32_t idx = scope_stack.size() - 1 - i;
+        return arena.alloc( Var { idx } );
+      }
+    }
+
+    return arena.alloc( Global { name } );
+
   }
 
   if (match(TokenKind::LPAREN)) {
     get();
-    auto expr = _parse_expression();
+    NodeId expr = _parse_expression();
     check(TokenKind::RPAREN);
     return expr;
   }
 
   if (match(TokenKind::NUMBER)) {
-    return std::make_unique<ExpressionNat>(get().lexeme);
+    uint64_t val = _parse_str(_clean_str(get().lexeme));
+    return arena.alloc( Nat { val } );
   }
 
   if (match(TokenKind::LBRACKET)) { // Linked Lists
     get();
 
-    auto combiner = _parse_primary();
+    NodeId combiner = _parse_primary();
 
     check(TokenKind::PIPE);
 
-    std::vector<std::unique_ptr<Expression>> elements;
+    std::vector<NodeId> elements;
 
     while (peek().kind != TokenKind::RBRACKET && peek().kind != TokenKind::END_FILE) {
 
@@ -166,23 +191,16 @@ std::unique_ptr<Expression> Parser::_parse_primary() {
     check(TokenKind::RBRACKET);
 
     if (elements.empty()) {
-      throw std::runtime_error("Error: List requires at list one terminator\n");
+      throw std::runtime_error("Error: List requires a terminator\n");
     }
 
-    auto expr = std::move(elements.back());
+    NodeId expr = elements.back();
     elements.pop_back();
 
     for (auto it = elements.rbegin(); it != elements.rend(); ++it) {
 
-      auto apply_combiner = std::make_unique<LambdaApplication>(
-        combiner->clone(),
-        std::move(*it)
-      );
-
-      expr = std::make_unique<LambdaApplication>(
-        std::move(apply_combiner),
-        std::move(expr)
-      );
+      NodeId apply_combiner = arena.alloc( App {combiner, *it} );
+      expr = arena.alloc( App {apply_combiner, expr } );
 
     }
 
@@ -192,26 +210,24 @@ std::unique_ptr<Expression> Parser::_parse_primary() {
 
   if (match(TokenKind::LCURLY)) { // Maps
     get();
-
-    auto combiner = _parse_primary();
-
+    NodeId combiner = _parse_primary();
     check(TokenKind::PIPE);
 
-    std::vector<std::pair<std::unique_ptr<Expression>, std::unique_ptr<Expression>>> pairs;
+    std::vector<std::pair<NodeId, NodeId>> pairs;
 
-    std::unique_ptr<Expression> terminator = nullptr;
+    NodeId terminator = NULL_NODE;
 
     while (peek().kind != TokenKind::RCURLY && peek().kind != TokenKind::END_FILE) {
 
-      auto first = _parse_primary();
+      NodeId first = _parse_primary();
 
       if (peek().kind == TokenKind::COLON) {
         get();
-        auto second = _parse_primary();
-        pairs.push_back({std::move(first), std::move(second)});
+        NodeId second = _parse_primary();
+        pairs.push_back({first, second});
 
       } else {
-        terminator = std::move(first);
+        terminator = first;
         break;
 
       }
@@ -224,29 +240,15 @@ std::unique_ptr<Expression> Parser::_parse_primary() {
       throw std::runtime_error("Error: Map requires a terminator\n");
     }
 
-    auto expr = std::move(terminator);
+    NodeId expr = terminator;
 
     for (auto it = pairs.rbegin(); it != pairs.rend(); ++it) {
 
-      auto build_key = std::make_unique<LambdaApplication>(
-        combiner->clone(),
-        std::move(it->first)
-      );
+      NodeId build_key  = arena.alloc( App { combiner , it->first  } );
+      NodeId inner_pair = arena.alloc( App { build_key, it->second } );
+      NodeId build_link = arena.alloc( App { combiner , inner_pair } );
 
-      auto inner_pair = std::make_unique<LambdaApplication>(
-        std::move(build_key),
-        std::move(it->second)
-      );
-
-      auto build_link = std::make_unique<LambdaApplication>(
-        combiner->clone(),
-        std::move(inner_pair)
-      );
-
-      expr = std::make_unique<LambdaApplication>(
-        std::move(build_link),
-        std::move(expr)
-      );
+      expr = arena.alloc( App { build_link, expr } );
 
     }
 
@@ -260,11 +262,11 @@ std::unique_ptr<Expression> Parser::_parse_primary() {
 
 std::unique_ptr<Statement> Parser::_parse_statement_expression() {
 
-  std::unique_ptr<Expression> left = _parse_expression();
+  NodeId left = _parse_expression();
 
   check(TokenKind::SEMICOLON);
 
-  return std::make_unique<StatementExpr>(std::move(left));
+  return std::make_unique<StatementExpr>(left);
 
 }
 
@@ -295,7 +297,7 @@ std::unique_ptr<Statement> Parser::_parse_function_declaration() {
   std::vector<std::string> args{};
   std::unordered_set<std::string> args_cache{};
 
-  std::unique_ptr<Expression> body;
+  NodeId body;
 
   while (peek().kind != TokenKind::RPAREN && peek().kind != TokenKind::END_FILE) {
 
@@ -313,10 +315,22 @@ std::unique_ptr<Statement> Parser::_parse_function_declaration() {
   check(TokenKind::RPAREN);
   check(TokenKind::LCURLY);
 
+  for (const auto& a : args) {
+    scope_stack.push_back(a);
+  }
+
   body = _parse_expression();
+
+  for (size_t i = 0; i < args.size(); ++i) {
+    scope_stack.pop_back();
+  }
+
+  for (size_t i = 0; i < args.size(); ++i) {
+    body = arena.alloc( Func { body } );
+  }
 
   check(TokenKind::RCURLY);
 
-  return std::make_unique<StatementFuncDecl>(name, args, std::move(body));
+  return std::make_unique<StatementFuncDecl>(name, args, body);
 
 }
