@@ -54,4 +54,9 @@ private:
 
   std::unique_ptr<Statement>  _parse_function_declaration();
 
+  NodeId _parse_pipe();
+
+  NodeId _parse_composition();
+
+  NodeId _parse_application();
 };

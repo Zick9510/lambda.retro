@@ -126,12 +126,18 @@ NodeId Parser::_parse_expression() {
 
   }
 
-  NodeId expr = _parse_primary();
+  return _parse_pipe();
+
+}
+
+NodeId Parser::_parse_application() {
+
+  NodeId expr = _parse_composition();
 
   while (match(TokenKind::LAMBDA) || match(TokenKind::IDENTIFIER) || match(TokenKind::NUMBER  ) ||
          match(TokenKind::LPAREN) || match(TokenKind::LCURLY    ) || match(TokenKind::LBRACKET) ) {
 
-    NodeId arg = _parse_primary();
+    NodeId arg = _parse_composition();
     expr = arena.alloc( App { expr, arg } );
 
   }
@@ -332,5 +338,74 @@ std::unique_ptr<Statement> Parser::_parse_function_declaration() {
   check(TokenKind::RCURLY);
 
   return std::make_unique<StatementFuncDecl>(name, args, body);
+
+}
+
+NodeId Parser::_parse_pipe() {
+
+  NodeId expr = _parse_application();
+
+  while (match(TokenKind::PIPE)) {
+    get();
+
+    NodeId rhs = _parse_application();
+
+    std::vector<NodeId> args;
+
+    NodeId curr = rhs;
+
+    while (curr != NULL_NODE && std::holds_alternative<App>(arena.get(curr).data)) {
+      args.push_back(std::get<App>(arena.get(curr).data).arg);
+      curr = std::get<App>(arena.get(curr).data).func;
+
+    }
+
+    std::reverse(args.begin(), args.end());
+
+    NodeId head = curr;
+    NodeId new_expr = arena.alloc( App { head, expr } );
+
+    for (NodeId arg : args) {
+      new_expr = arena.alloc( App { new_expr, arg } );
+    }
+
+    expr = new_expr;
+
+    //expr = arena.alloc( App { rhs, expr } );
+
+  }
+
+  return expr;
+
+}
+
+NodeId Parser::_parse_composition() {
+
+  NodeId left = _parse_primary();
+
+  while (match(TokenKind::DOT)) {
+    get();
+
+    NodeId right = _parse_primary();
+
+    NodeId var_x = arena.alloc( Var { 0 } );
+    NodeId var_g = arena.alloc( Var { 1 } );
+    NodeId var_f = arena.alloc( Var { 2 } );
+
+    NodeId g_x   = arena.alloc( App { var_g, var_x } );
+    NodeId f_g_x = arena.alloc( App { var_f, g_x   } );
+
+    NodeId compose = arena.alloc( Func {
+      arena.alloc( Func {
+        arena.alloc( Func { f_g_x } )
+      } )
+    } );
+
+    NodeId apply_left = arena.alloc( App { compose, left } );
+    left = arena.alloc( App { apply_left, right } );
+
+  }
+
+  return left;
 
 }

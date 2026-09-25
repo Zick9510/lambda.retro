@@ -70,20 +70,20 @@ ADD SUB 5 3 SUB 5 1; , Dear reader: Compare this result
 ADD (SUB 5 3) (SUB 5 1); , With this one
 
 func FACT_GEN ( recurse n ) { , I am sorry for my bad code
+(
 	(
 		(
+			( IS_0 n )
+			( \d . 1 )
+		)
+		( \d .
 			(
-				( IS_0 n )
-				( \d . 1 )
+				( MULT n )
+				( recurse ( SUB n 1 ) )
 			)
-			( \d .
-				(
-					( MULT n )
-					( recurse ( SUB n 1 ) )
-				)
-			)
-		) 0 , Dummy value. Can be anything
-	)
+		)
+	) 0 , Dummy value. Can be anything
+)
 }
 
 ,func FACT ( n ) { (( Z FACT_GEN ) n ) } ,, Two ways of implementing recursion
@@ -92,17 +92,17 @@ func FACT ( n ) { fix FACT_GEN n }
 FACT 3;
 
 func FIB_GEN ( recurse n ) {
-	( ( IS_0 n )
-		( \d . 0 )
-		( \d .
-		( IS_0 ( SUB n 1 )
-				( \d2 . 1 )
-				( \d2 .
-					ADD ( recurse ( SUB n 1 ) ) ( recurse ( SUB n 2 ) )
-				)
-			) 0
-		)
-	) 0
+( ( IS_0 n )
+	( \d . 0 )
+	( \d .
+	( IS_0 ( SUB n 1 )
+			( \d2 . 1 )
+			( \d2 .
+				ADD ( recurse ( SUB n 1 ) ) ( recurse ( SUB n 2 ) )
+			)
+		) 0
+	)
+) 0
 }
 
 func FIB ( n ) { fix FIB_GEN n }
@@ -126,36 +126,36 @@ POWER 3 3;
 func LT (a b) { AND (IS_0 (SUB a b)) (NOT (IS_0 (SUB b a))) }
 
 func DIV_GEN ( recurse n m ) {
-	(
-		( LT n m )
-		( \d . 0 )
-		( \d .
-			SUCC ( recurse ( SUB n m ) m )
-		) 0
-	)
+(
+	( LT n m )
+	( \d . 0 )
+	( \d .
+		SUCC ( recurse ( SUB n m ) m )
+	) 0
+)
 }
 
 func DIV ( n m ) {
-	( IS_0 m )
-	( \d . 0 )
-	( \d .
-		fix DIV_GEN n m
-	) 0
+( IS_0 m )
+( \d . 0 )
+( \d .
+	fix DIV_GEN n m
+) 0
 }
 
 func EMPTY ( f ) { TRUE }
 func IS_EMPTY ( l ) { l (\x y. FALSE)  }
 
 func SUM_LIST_GEN (recurse l) {
-	(
-		( IS_EMPTY l)
-		( \d . 0)
-		( \d .
-			ADD
-				(FIRST l)
-				(recurse (SECOND l))
-		)
-	) 0
+(
+	( IS_EMPTY l)
+	( \d . 0)
+	( \d .
+		ADD
+			(FIRST l)
+			(recurse (SECOND l))
+	)
+) 0
 }
 
 func SUM_LIST ( l ) { fix SUM_LIST_GEN l }
@@ -169,7 +169,7 @@ SUM_LIST [ PAIR | 3 1 4 EMPTY ];
 func EMPTY_MAP ( k ) { EMPTY }
 
 func INSERT ( M key value ) {
-	\query_key . (EQ query_key key) (value) (M query_key)
+\query_key . (EQ query_key key) (value) (M query_key)
 }
 
 (INSERT (INSERT EMPTY_MAP 1 2) 2 3) 1;
@@ -192,24 +192,24 @@ func HEAD ( p ) { p TRUE  }
 func TAIL ( p ) { p FALSE }
 
 func GET_REC ( self M key ) { , Presonally I prefer this style of recursion
-	( ( IS_EMPTY M )
-		( EMPTY )
-		( ( EQ ( HEAD ( HEAD M ) ) key)
-			( \d . ( TAIL ( HEAD M ) ) ) , This is called a "thunk". No idea what it means,, I call it a dummy lambda function. Prevents the engine's eager evaluation
-			( \d . ( self self ( TAIL M ) key ) ), If you don't have dummies,, the engine would eval this "self self" into segfault realm (oblivion,, which is bad)
-		) 0
-	)
+( ( IS_EMPTY M )
+	( EMPTY )
+	( ( EQ ( HEAD ( HEAD M ) ) key)
+		( \d . ( TAIL ( HEAD M ) ) ) , This is called a "thunk". No idea what it means,, I call it a dummy lambda function. Prevents the engine's eager evaluation
+		( \d . ( self self ( TAIL M ) key ) ), If you don't have dummies,, the engine would eval this "self self" into segfault realm (oblivion,, which is bad)
+	) 0
+)
 }
 
 func GET ( M k ) { GET_REC GET_REC (M 0) k }
 
 func DEL_REC ( self M key ) {
-	( IS_EMPTY M )
-		( EMPTY )
-		( (EQ (HEAD (HEAD M)) key )
-			( \d . (self self (TAIL M) key ))
-			( \d . PAIR (HEAD M) (self self (TAIL M) key))
-		) 0
+( IS_EMPTY M )
+	( EMPTY )
+	( (EQ (HEAD (HEAD M)) key )
+		( \d . (self self (TAIL M) key ))
+		( \d . PAIR (HEAD M) (self self (TAIL M) key))
+	) 0
 }
 
 func DELETE ( M k ) { \d . DEL_REC DEL_REC (M 0) k }
@@ -241,14 +241,14 @@ GET My 3;
 GET (DELETE Mx 2) 2;
 
 func Mz ( d ) {
-	{ PAIR | , Syntactic sugar for maps
-		0 :  0
-		1 : 10
-		2 : 20
-		3 : 30
-		4 : 40
-		EMPTY
-	}
+{ PAIR | , Syntactic sugar for maps
+	0 :  0
+	1 : 10
+	2 : 20
+	3 : 30
+	4 : 40
+	EMPTY
+}
 }
 
 GET Mz 3;
@@ -259,28 +259,28 @@ GET Mz 3;
 
 04_423_12_523324_2; , It doesn't matter how. No need to keep order here
 
-func MAP_REC ( self f list ) { , Applies a function to each element on a list
-	( ( IS_EMPTY list )
-			( \d . EMPTY )
-			( \d . PAIR (f (HEAD list)) (self self f (TAIL list))) , List not empty: apply function to the first element,, recursive call on the second
-	) 0
+func MAP_REC ( self list f ) { , Applies a function to each element on a list
+( ( IS_EMPTY list )
+		( \d . EMPTY )
+		( \d . PAIR (f (HEAD list)) (self self (TAIL list) f )) , List not empty: apply function to the first element,, recursive call on the second
+) 0
 }
 
-func MAP ( f list ) { MAP_REC MAP_REC f list }
+func MAP ( list f ) { MAP_REC MAP_REC list f }
 
 func FILTER_REC ( self f list ) {
-	( ( IS_EMPTY list )
-		( \d . EMPTY )
-		( \d .
-			( ( f (HEAD list) )
-				( \d2 .  PAIR ( HEAD list ) ( self self f (TAIL list) ))
-				( \d2 . self self f (TAIL list) )
-			) 0
-		)
-	) 0
+( ( IS_EMPTY list )
+	( \d . EMPTY )
+	( \d .
+		( ( f (HEAD list) )
+			( \d2 .  PAIR ( HEAD list ) ( self self f (TAIL list) ))
+			( \d2 . self self f (TAIL list) )
+		) 0
+	)
+) 0
 }
 
-func FILTER ( f list ) { FILTER_REC FILTER_REC f list }
+func FILTER ( list f ) { FILTER_REC FILTER_REC f list }
 
 func +1 ( a ) { + a 1 }
 
@@ -288,26 +288,26 @@ func +1 ( a ) { + a 1 }
 
 [ PAIR | 1 2 3 4 EMPTY ]; , Syntactic sugar for linked lists
 
-MAP +1 [ PAIR | 1 2 3 4 EMPTY ];
+MAP [ PAIR | 1 2 3 4 EMPTY ] +1;
 
-FILTER (EQ 2) [ PAIR | 1 2 2 3 2 1 2 3 2 3 EMPTY ];
+FILTER [ PAIR | 1 2 2 3 2 1 2 3 2 3 EMPTY ] (EQ 2);
 
 [ ADD | 2 3 4 5 6 ];
 
 func FOLDR_REC ( self f acc list ) {
-	( ( IS_EMPTY list )
-		( \d . acc )
-		( \d . f ( HEAD list ) ( self self f acc ( TAIL list ) ) )
-	) 0
+( ( IS_EMPTY list )
+	( \d . acc )
+	( \d . f ( HEAD list ) ( self self f acc ( TAIL list ) ) )
+) 0
 }
 
 func FOLDR ( f acc list ) { FOLDR_REC FOLDR_REC f acc list }
 
 func FOLDL_REC ( self f acc list ) {
-	( ( IS_EMPTY list )
-		( \d . acc )
-		( \d . self self f ( f acc ( HEAD list ) ) ( TAIL list ) )
-	) 0
+( ( IS_EMPTY list )
+	( \d . acc )
+	( \d . self self f ( f acc ( HEAD list ) ) ( TAIL list ) )
+) 0
 }
 
 func FOLDL ( f acc list ) { FOLDL_REC FOLDL_REC f acc list }
@@ -318,10 +318,10 @@ func LENGTH ( list ) { FOLDL INC_ACC 0 list }
 LENGTH [ PAIR | 1 2 3 4 5 0 2 3 EMPTY ];
 
 func APPEND_REC ( self l1 l2 ) {
-	( ( IS_EMPTY l1 )
-			( \d . l2 )
-			( \d . PAIR ( HEAD l1) (self self (TAIL l1) l2 ))
-	) 0
+( ( IS_EMPTY l1 )
+		( \d . l2 )
+		( \d . PAIR ( HEAD l1) (self self (TAIL l1) l2 ))
+) 0
 }
 
 func APPEND ( l1 l2 ) { APPEND_REC APPEND_REC l1 l2 }
@@ -329,29 +329,29 @@ func APPEND ( l1 l2 ) { APPEND_REC APPEND_REC l1 l2 }
 APPEND [ PAIR | 1 2 3 EMPTY ] [ PAIR | 4 5 6 EMPTY ];
 
 func ANY_REC ( self f list ) {
-	( ( IS_EMPTY list )
-			( \d . FALSE )
-			( \d .
-				( ( f ( HEAD list ) )
-								( \d2 . TRUE )
-								( \d2 . self self f ( TAIL list ))
-				) 0
-			)
-	) 0
+( ( IS_EMPTY list )
+		( \d . FALSE )
+		( \d .
+			( ( f ( HEAD list ) )
+							( \d2 . TRUE )
+							( \d2 . self self f ( TAIL list ))
+			) 0
+		)
+) 0
 }
 
 func ANY ( f list ) { ANY_REC ANY_REC f list }
 
 func INDEX_REC ( self list i ) {
-	( ( IS_EMPTY list )
-			( \d . EMPTY )
-			( \d .
-				( ( EQ i 0 )
-					( \d2 . HEAD list )
-					( \d2 . self self ( TAIL list ) ( SUB i 1 ) )
-				) 0
-			)
-	) 0
+( ( IS_EMPTY list )
+		( \d . EMPTY )
+		( \d .
+			( ( EQ i 0 )
+				( \d2 . HEAD list )
+				( \d2 . self self ( TAIL list ) ( SUB i 1 ) )
+			) 0
+		)
+) 0
 }
 
 func INDEX ( list i ) { INDEX_REC INDEX_REC list i }
@@ -360,29 +360,29 @@ func REVERSE_STEP ( acc x ) { PAIR x acc }
 func REVERSE ( list ) { FOLDL REVERSE_STEP EMPTY list }
 
 func TAKE_REC ( self list n ) {
-	( ( IS_EMPTY list )
-			( \d . EMPTY )
-			( \d .
-				( ( EQ n 0 )
-					( \d2 . EMPTY )
-					( \d2 . PAIR ( HEAD list ) (self self ( TAIL list ) ( SUB n 1 ) ) )
-				) 0
-			)
-	) 0
+( ( IS_EMPTY list )
+		( \d . EMPTY )
+		( \d .
+			( ( EQ n 0 )
+				( \d2 . EMPTY )
+				( \d2 . PAIR ( HEAD list ) (self self ( TAIL list ) ( SUB n 1 ) ) )
+			) 0
+		)
+) 0
 }
 
 func TAKE ( list n ) { TAKE_REC TAKE_REC list n }
 
 func DROP_REC ( self list n ) {
-	( ( IS_EMPTY list )
-			( \d . EMPTY )
-			( \d .
-				( ( EQ n 0 )
-					( \d2 . list )
-					( \d2 . self self ( TAIL list ) ( SUB n 1 ) )
-				) 0
-			)
-	) 0
+( ( IS_EMPTY list )
+		( \d . EMPTY )
+		( \d .
+			( ( EQ n 0 )
+				( \d2 . list )
+				( \d2 . self self ( TAIL list ) ( SUB n 1 ) )
+			) 0
+		)
+) 0
 }
 
 func DROP ( list n ) { DROP_REC DROP_REC list n }
@@ -430,3 +430,19 @@ func REMOVE_REC ( self list i ) {
 }
 
 func REMOVE ( list i ) { REMOVE_REC REMOVE_REC list i }
+
+func +2 ( a ) { ADD a 2 }
+
+func *3 ( a ) { MULT a 3 }
+
+*3 (+2 1);
+
+*3 . +2 1;
+
+,[ PAIR | "Hello" EMPTY ];
+
+MAP [ PAIR | 1 (2 3) 3 4 EMPTY ] +1;
+
+MAP (MAP [ PAIR | 1 2 3 4 EMPTY ] +1) *3;
+
+[ PAIR | 1 2 3 4 EMPTY ] | MAP +1 | MAP *3;

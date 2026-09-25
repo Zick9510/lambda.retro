@@ -216,6 +216,28 @@ NodeId BetaReducer::deepReduce(Arena& arena, NodeId node_id) {
     }
   }
 
+
+  if (auto builtin = std::get_if<Builtin>(&f_node.data)) {
+
+    if (builtin->op == OP::FIX) {
+
+      // FIX f -> f (\x . (FIX f) x)
+
+      NodeId shifted_f = shift(arena, arg_id, 1, 0);
+
+      NodeId fix       = arena.alloc( App { func_id, shifted_f } );
+
+      NodeId x         = arena.alloc( Var { 0 } );
+
+      NodeId fix_x     = arena.alloc( App { fix, x } );
+
+      NodeId delayed   = arena.alloc( Func { fix_x } );
+
+      return { true, arena.alloc( App { arg_id, delayed } ) };
+
+    }
+  }
+
   return { false, node_id };
 
 }
