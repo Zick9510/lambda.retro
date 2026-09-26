@@ -12,6 +12,9 @@
 void Driver::start(MainConfig& config) {
 
   if (config.input_file.has_value()) { // Standard
+
+    config.imported_files.insert(config.input_file.value());
+
     std::filesystem::path file = config.input_file.value();
 
     auto source = readSourceFile(file);

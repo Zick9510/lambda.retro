@@ -359,11 +359,8 @@ std::unique_ptr<Statement> Parser::_parse_function_declaration() {
 
 void Parser::_parse_import(Block& current_block) {
 
-  std::cout << "362 _parse_import\n";
-
   check(TokenKind::IMPORT);
   std::string filename = check(TokenKind::STRING).lexeme;
-  std::cout << "filename: '" << filename << "'\n";
   check(TokenKind::SEMICOLON);
 
   if (config.imported_files.count(filename) == 0) {
@@ -386,6 +383,9 @@ void Parser::_parse_import(Block& current_block) {
     for (auto& inst : _block->instr) {
       current_block.push(std::move(inst));
     }
+
+  } else {
+    throw std::runtime_error("Error: Cyclic importation detected at '" + filename + "'\n");
 
   }
 
