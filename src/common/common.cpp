@@ -254,6 +254,13 @@ void print_node(Arena& arena, NodeId node_id, uint32_t depth) {
     print_node(arena, q->inner, depth);
     std::cout << ") ";
 
+  } else if (auto qc = std::get_if<QuoteCombiner>(&node.data)) {
+    std::cout << color::SYM << "quote [ " << color::RESET;
+    print_node(arena, qc->combiner, depth);
+    std::cout << color::SYM << "| " << color::RESET;
+    print_node(arena, qc->inner   , depth);
+    std::cout << color::SYM << "] " << color::RESET;
+
   } else if (auto* e = std::get_if<Eval>(&node.data)) {
     std::cout << color::SYM << "eval " << color::RESET << "( ";
     print_node(arena, e->inner, depth);

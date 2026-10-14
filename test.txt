@@ -459,7 +459,7 @@ func A ( a ) { let x be ADD a a in MULT x x }
 
 A 0; A 1; A 2; A 3;
 
-func A ( a b ) { let x be a in let y be (ADD x b) in ADD x y } , x = a; y = x + b; ret = x + y -> a + a + b
+func A ( a b ) { let x be a in let y be (ADD x b) in ADD x y } , x = a; y = x + b; x + y -> a + a + b
 
 A 2 3;
 
@@ -479,6 +479,14 @@ match (EQ x) with { , ( EQ x 1 ) ( 10 ) ( EQ x 2 ( 20 ) ( ... ) )
 		: 40;
 };
 
+let y be 20 in
+match (EQ 2) with {
+	1 : 10;
+	2 : y ;
+	: 0;
+
+};
+
 func A ( x ) {
 
 	match (EQ x) with {
@@ -490,7 +498,7 @@ func A ( x ) {
 
 }
 
-A 4;
+A 0; A 1; A 2; A 3; A 4;
 
 quote (ADD 1 2);
 
@@ -500,4 +508,70 @@ macro unless (cond body1 body2) {
 	(EQ cond 0) body1 body2
 }
 
-unless ( EQ 4 5 ) { 0 } { 1 }
+unless ( EQ 4 5 ) { 0 } { 1 };
+
+func TAG ( node ) { FIRST  node }
+func VAL ( node ) { SECOND node }
+
+func INC_N ( expr ) {
+	match ( EQ ( TAG expr ) ) with {
+	0 : 1;
+	: 0;
+	}
+}
+
+INC_N (PAIR 0 5);
+INC_N (quote 5);
+INC_N (quote [ PAIR | 5 ]);
+
+match ( EQ 0 ) with {
+
+	1 : 10;
+	2 : 20;
+	: 100;
+
+};
+
+let y be 20 in
+match (EQ 2) with {
+	1 : 10;
+	2 : y ;
+	: 100;
+
+};
+
+func A ( y ) {
+	match (EQ 2) with {
+		1 : 10;
+		2 : y ;
+		: 100;
+	}
+}
+
+A 20;
+
+func B ( x ) {
+	match (EQ 2) with {
+		1 : 10;
+		x : 20;
+		: 100;
+	}
+}
+
+B 0; B 1; B 2; B 3;
+
+func C ( x y z ) {
+	match (EQ z) with {
+	1 : 10;
+	2 : 20;
+	x : y ;
+	: 100;
+
+	}
+}
+
+C 3 30 3;
+C 3 40 3;
+C 4 40 4;
+C 4 50 1;
+C 1 50 1;

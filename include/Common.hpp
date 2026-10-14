@@ -73,8 +73,8 @@ static const std::unordered_map<TokenKind, std::string> KIND_TO_STRING = {
   { TokenKind::END_FILE, "END OF FILE" },
   { TokenKind::NEW_LINE, "NEW LINE" },
 
-  { TokenKind::DOT, "." },
-  { TokenKind::COLON, "," },
+  { TokenKind::DOT      , "." },
+  { TokenKind::COLON    , "," },
   { TokenKind::SEMICOLON, ";" },
 
   { TokenKind::LPAREN, "(" },
@@ -267,7 +267,9 @@ struct Indirection { NodeId target; };
 struct Quote { NodeId inner; };
 struct Eval  { NodeId inner; };
 
-using NodeVariant = std::variant<Global, Var, App, Func, Nat, Builtin, EnvNode, Closure, Indirection, Quote, Eval>;
+struct QuoteCombiner { NodeId combiner; NodeId inner; };
+
+using NodeVariant = std::variant<Global, Var, App, Func, Nat, Builtin, EnvNode, Closure, Indirection, Quote, Eval, QuoteCombiner>;
 
 struct Node { NodeVariant data; };
 

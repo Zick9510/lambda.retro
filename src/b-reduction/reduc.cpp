@@ -53,6 +53,12 @@ NodeId BetaReducer::shift(Arena& arena, NodeId node_id, int inc, uint32_t depth)
     return arena.alloc( Eval { shifted } );
   }
 
+  if (auto ind = std::get_if<Indirection>(&node.data)) {
+    NodeId shifted = shift(arena, ind->target, inc, depth);
+    if (ind->target == shifted) { return node_id; }
+    return arena.alloc( Indirection { shifted } );
+  }
+
   return node_id;
 
 }
@@ -113,6 +119,12 @@ NodeId BetaReducer::substitute(Arena& arena, NodeId node_id, NodeId arg_id, uint
     return arena.alloc( Eval { sub } );
   }
 
+  if (auto ind = std::get_if<Indirection>(&node.data)) {
+    NodeId shifted = substitute(arena, ind->target, arg_id, depth);
+    if (ind->target == shifted) { return node_id; }
+    return arena.alloc( Indirection { shifted } );
+  }
+
   return node_id;
 
 }
@@ -147,11 +159,16 @@ NodeId BetaReducer::deepReduce(Arena& arena, NodeId node_id) {
     return arena.alloc( App { sub_func, sub_arg } );
 
   } else if (auto q = std::get_if<Quote>(&node.data)) {
-    //return arena.alloc( Quote { deepReduce(arena, q->inner) } );
+    return node_id;
+
+  } else if (auto q = std::get_if<QuoteCombiner>(&node.data)) {
     return node_id;
 
   } else if (auto e = std::get_if<Eval>(&node.data)) {
     return arena.alloc( Eval { deepReduce(arena, e->inner) } );
+
+  } else if (auto i = std::get_if<Indirection>(&node.data)) {
+    return arena.alloc( Indirection { deepReduce(arena, i->target) } );
 
   }
 
@@ -164,6 +181,14 @@ NodeId BetaReducer::deepReduce(Arena& arena, NodeId node_id) {
   if (node_id == NULL_NODE) { return { false, NULL_NODE }; }
 
   Node node = arena.get(node_id);
+
+  if (auto ind = std::get_if<Indirection>(&node.data)) {
+    auto [inner_stepped, next_inner] = step(arena, ind->target);
+    if (inner_stepped) {
+      return { true, arena.alloc( Indirection { next_inner } ) };
+    }
+    return { true, ind->target };
+  }
 
   if (auto eval = std::get_if<Eval>(&node.data)) {
     auto [inner_stepped, next_inner] = step(arena, eval->inner);

@@ -172,14 +172,27 @@ NodeId Parser::_parse_primary() {
 
   if (match(TokenKind::QUOTE)) {
     get();
+
+    if (match(TokenKind::LBRACKET)) {
+      get();
+      NodeId combiner = _parse_primary();
+      check(TokenKind::PIPE);
+      NodeId inner = _parse_expression();
+      check(TokenKind::RBRACKET);
+      return arena.alloc( QuoteCombiner { combiner, inner } );
+
+    }
+
     NodeId inner = _parse_expression();
     return arena.alloc( Quote { inner } );
+
   }
 
   if (match(TokenKind::EVAL)) {
     get();
     NodeId inner = _parse_expression();
     return arena.alloc( Eval { inner } );
+
   }
 
   if (match(TokenKind::IDENTIFIER)) {
@@ -201,11 +214,13 @@ NodeId Parser::_parse_primary() {
     NodeId expr = _parse_expression();
     check(TokenKind::RPAREN);
     return expr;
+
   }
 
   if (match(TokenKind::NUMBER)) {
     uint64_t val = _parse_str(_clean_str(get().lexeme));
     return arena.alloc( Nat { val } );
+
   }
 
   if (match(TokenKind::LBRACKET)) { // Linked Lists
@@ -567,11 +582,9 @@ NodeId Parser::_parse_match() {
   NodeId comparator = _parse_expression();
 
   check(TokenKind::WITH);
-
   check(TokenKind::LCURLY);
 
   std::vector<std::pair<NodeId, NodeId>> clauses;
-
   NodeId default_expr = NULL_NODE;
 
   while (!match(TokenKind::RCURLY) && !is_end()) {
@@ -599,30 +612,33 @@ NodeId Parser::_parse_match() {
     throw std::runtime_error("[Error] match expression requires a default case\n");
   }
 
-  NodeId current = arena.alloc( Func { default_expr } );
-
   BetaReducer reducer;
+  size_t n = clauses.size();
 
-  for (auto it = clauses.rbegin(); it != clauses.rend(); ++it) {
-    NodeId pattern = it->first;
-    NodeId body    = it->second;
+  NodeId current = arena.alloc( Func { reducer.shift(arena, default_expr, 1, 0) } );
 
-    NodeId shifted_comp = reducer.shift(arena, comparator, 1, 0);
-    NodeId shifted_else = reducer.shift(arena, current   , 1, 0);
+  for (int i = (int)n - 1; i >= 0; --i) {
+    NodeId patern_ = clauses[i].first ;
+    NodeId body_   = clauses[i].second;
 
-    NodeId cond = arena.alloc( App { shifted_comp, pattern } );
+    NodeId shifted_comp  = reducer.shift(arena, comparator, 1, 0);
+    NodeId pattern       = reducer.shift(arena, patern_   , 1, 0);
+    NodeId body          = reducer.shift(arena, body_     , 2, 0);
+    NodeId shifted_else  = reducer.shift(arena, current   , 1, 0);
+
+    NodeId cond       = arena.alloc( App { shifted_comp, pattern } );
     NodeId then_thunk = arena.alloc( Func { body } );
 
     NodeId app1 = arena.alloc( App { cond, then_thunk   } );
     NodeId app2 = arena.alloc( App { app1, shifted_else } );
-    NodeId zero = arena.alloc( Nat { 0 } ); // Dummy
-    NodeId expr = arena.alloc( App { app2, zero } );
+    NodeId zero = arena.alloc( Nat { 0 } );
+    NodeId expr = arena.alloc( App { app2, zero         } );
 
     current = arena.alloc( Func { expr } );
 
   }
 
-  NodeId zero_top = arena.alloc( Nat { 0 } ); // Dummy
+  NodeId zero_top = arena.alloc( Nat { 0 } );
   return arena.alloc( App { current, zero_top } );
 
 }

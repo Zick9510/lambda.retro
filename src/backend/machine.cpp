@@ -90,6 +90,13 @@ NodeId Interpreter::expand_env(NodeId expr) {
 
   }
 
+  if (auto qc = std::get_if<QuoteCombiner>(&node.data)) {
+    NodeId combiner   = expand_env(qc->combiner);
+    NodeId expr_inner = expand_env(qc->inner   );
+    return serialize(arena, combiner, expr_inner);
+
+  }
+
   if (auto e = std::get_if<Eval>(&node.data)) {
     return arena.alloc( Eval { expand_env(e->inner) } );
 
@@ -113,7 +120,13 @@ void Interpreter::execute(const Block* program) {
 
     if (auto decl = dynamic_cast<const StatementFuncDecl*>(stmt.get())) {
 
-      env[decl->name] = expand_env(decl->body);
+      NodeId indirection = arena.alloc( Indirection { NULL_NODE } ); // Dummy
+
+      env[decl->name] = indirection;
+
+      NodeId expanded_body = expand_env(decl->body);
+
+      std::get<Indirection>(arena.get(indirection).data).target = expanded_body;
 
       std::cout << color::GREEN << " λ  " << color::RESET << "[ " << get_color(decl->name) << decl->name << color::RESET << " ( ";
 
@@ -216,6 +229,48 @@ NodeId Interpreter::substitute_macro(NodeId node_id, const std::vector<std::stri
   }
 
   return node_id;
+
+}
+
+NodeId Interpreter::serialize(Arena& arena, NodeId combiner, NodeId expr) {
+
+  if (expr == NULL_NODE) { return NULL_NODE; }
+
+  Node node = arena.get(expr);
+
+  auto apply = [&](NodeId a, NodeId b) {
+    NodeId app = arena.alloc( App { combiner, a } );
+    return arena.alloc( App { app, b } );
+  };
+
+  if (auto nat = std::get_if<Nat>(&node.data)) {
+    NodeId tag = arena.alloc( Nat { 0 } );
+    NodeId val = arena.alloc( Nat { nat->value });
+    return apply(tag, val);
+  }
+
+  if (auto global = std::get_if<Global>(&node.data)) {
+    NodeId tag = arena.alloc( Nat { 1 } );
+    NodeId str_list = arena.alloc( Nat { 0 } );
+
+    for (auto it = global->name.rbegin(); it != global->name.rend(); ++it) {
+      NodeId c = arena.alloc( Nat { (uint64_t)(unsigned char)*it } );
+      str_list = apply(c, str_list);
+    }
+
+    return apply(tag, str_list);
+
+  }
+
+  if (auto app = std::get_if<App>(&node.data)) {
+    NodeId tag = arena.alloc( Nat { 2 } );
+    NodeId q_func = serialize(arena, combiner, app->func);
+    NodeId q_arg  = serialize(arena, combiner, app->arg );
+    NodeId inner_pair = apply(q_func, q_arg);
+    return apply(tag, inner_pair);
+  }
+
+  return arena.alloc( Nat { 0 } );
 
 }
 

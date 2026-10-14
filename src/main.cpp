@@ -48,7 +48,8 @@ void print_help(char** argv) {
   << color::GREEN << "λ " << color::RESET << "means \"Hey, function declaration here, pay attention!!\"\n"
   << color::RED << "* " << color::RESET << "denote what the program read, this is what you wrote, think of it as a question\n"
   << color::YELLOW << "> " << color::RESET << "each arrow pointing to the right are the steps it took to get to the final result\n"
-  << color::BLUE << "- " << color::RESET << "then this sign is the program telling \"Hey! I have evaluated your expression, here is your answer!\"\n\n";
+  << color::BLUE << "- " << color::RESET << "then this sign is the program telling \"Hey! I have evaluated your expression, here is your answer!\"\n"
+  << color::YELLOW << "M " << color::RESET << "this little guy means \"Heads up! Macro definition on the shore!\". Think of macros as functions that take in code as arguments and mess up with it. (they can also take in standard arguments as... arguments too)\n\n";
 
   std::cout << "Note: if you define a function that contains a symbol, it will colored a" << color::B_CYAN << " cyan" << color::RESET << " tone. This is meant for you to define operators and spot them more easily\n";
 

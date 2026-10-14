@@ -17,6 +17,8 @@ private:
 
   NodeId substitute_macro(NodeId node_id, const std::vector<std::string>& param, const std::vector<NodeId>& args);
 
+  NodeId serialize(Arena& arena, NodeId combiner, NodeId expr);
+
 public:
 
   Arena arena;
