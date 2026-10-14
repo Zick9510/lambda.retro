@@ -6,6 +6,7 @@
 
 class Driver {
 public:
+
   Driver() = default;
 
   void start(MainConfig& config);

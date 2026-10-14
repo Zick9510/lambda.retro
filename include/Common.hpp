@@ -8,7 +8,7 @@ enum class TokenKind : uint8_t {
 
   IDENTIFIER, // Identifiers, variables, etc.
   NUMBER    , // Numbers, floats, etc.
-  STRING    ,
+  STRING    , // Strings
 
   LAMBDA    , // \ / lambda
 
@@ -34,8 +34,17 @@ enum class TokenKind : uint8_t {
 
   // Keywords
   //LAMBDA // This was previously defined
-  FUNC,
-  IMPORT,
+
+  FUNC      , // func
+  IMPORT    , // import
+  EXPORT    , // export
+
+  LET       , // let
+  BE        , // be
+  IN        , // in
+
+  MATCH     , // match
+  WITH      , // with
 
   // Builtins
 
@@ -53,8 +62,8 @@ enum class TokenKind : uint8_t {
 
 static const std::unordered_map<TokenKind, std::string> KIND_TO_STRING = {
   { TokenKind::IDENTIFIER, "IDENTIFIER" },
-  { TokenKind::NUMBER, "NUMBER" },
-  { TokenKind::LAMBDA, "LAMBDA" },
+  { TokenKind::NUMBER    , "NUMBER" },
+  { TokenKind::LAMBDA    , "LAMBDA" },
 
   { TokenKind::END_FILE, "END OF FILE" },
   { TokenKind::NEW_LINE, "NEW LINE" },
@@ -76,9 +85,16 @@ static const std::unordered_map<TokenKind, std::string> KIND_TO_STRING = {
 
   { TokenKind::ERROR, "[ERROR]" },
 
-  { TokenKind::FUNC, "func" },
+  // Keywords
 
-  { TokenKind::IMPORT, "import" }
+  { TokenKind::FUNC  , "func"   },
+  { TokenKind::IMPORT, "import" },
+  { TokenKind::EXPORT, "export" },
+  { TokenKind::LET   , "let"    },
+  { TokenKind::BE    , "be"     },
+  { TokenKind::IN    , "in"     },
+  { TokenKind::MATCH , "match"  },
+  { TokenKind::WITH  , "with"   },
 
 };
 
@@ -160,9 +176,23 @@ inline std::string get_color(const std::string& name) {
 
 static const std::unordered_map<std::string, TokenKind> KEYWORDS = {
 
+  // Functions
+
   {"func"  , TokenKind::FUNC  },
   {"lambda", TokenKind::LAMBDA},
+
+  // Imports
   {"import", TokenKind::IMPORT},
+  {"export", TokenKind::EXPORT},
+
+  // Let-be-in
+  {"let"  , TokenKind::LET  },
+  {"be"   , TokenKind::BE   },
+  {"in"   , TokenKind::IN   },
+
+  // Match
+  {"match", TokenKind::MATCH},
+  {"with" , TokenKind::WITH },
 
 };
 

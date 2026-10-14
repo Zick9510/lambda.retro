@@ -247,7 +247,7 @@ std::vector<Token> Lexer::tokenize() {
 
     }
 
-    // Structural Symbols \.(){};
+    // Structural Symbols \ . () {} [] ;
 
     if (SYMBOLS.count(current())) {
 

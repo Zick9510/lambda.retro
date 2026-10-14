@@ -4,6 +4,8 @@
 
 #include "Lexer.hpp"
 
+#include "Reduc.hpp"
+
 #include "Common.hpp"
 
 // Public
@@ -158,7 +160,14 @@ NodeId Parser::_parse_primary() {
 
   if (match(TokenKind::LAMBDA)) {
     return _parse_expression();
+  }
 
+  if (match(TokenKind::LET)) {
+    return _parse_let();
+  }
+
+  if (match(TokenKind::MATCH)) {
+    return _parse_match();
   }
 
   if (match(TokenKind::IDENTIFIER)) {
@@ -455,5 +464,94 @@ NodeId Parser::_parse_composition() {
   }
 
   return left;
+
+}
+
+NodeId Parser::_parse_let() {
+
+  check(TokenKind::LET);
+
+  std::string name = check(TokenKind::IDENTIFIER).lexeme;
+
+  check(TokenKind::BE);
+
+  NodeId value = _parse_expression();
+
+  check(TokenKind::IN);
+
+  scope_stack.push_back(name);
+  NodeId body = _parse_expression();
+  scope_stack.pop_back();
+
+  NodeId func = arena.alloc( Func { body } );
+
+  return arena.alloc( App { func, value } );
+
+}
+
+NodeId Parser::_parse_match() {
+
+  check(TokenKind::MATCH);
+
+  NodeId comparator = _parse_expression();
+
+  check(TokenKind::WITH);
+
+  check(TokenKind::LCURLY);
+
+  std::vector<std::pair<NodeId, NodeId>> clauses;
+
+  NodeId default_expr = NULL_NODE;
+
+  while (!match(TokenKind::RCURLY) && !is_end()) {
+
+    if (match(TokenKind::COLON)) {
+      get();
+      default_expr = _parse_expression();
+      if (match(TokenKind::SEMICOLON)) { get(); }
+      break;
+
+    } else {
+      NodeId pattern = _parse_expression();
+      check(TokenKind::COLON);
+      NodeId body = _parse_expression();
+      if (match(TokenKind::SEMICOLON)) { get(); }
+      clauses.push_back( { pattern, body } );
+
+    }
+
+  }
+
+  check(TokenKind::RCURLY);
+
+  if (default_expr == NULL_NODE) {
+    throw std::runtime_error("[Error] match expression requires a default case\n");
+  }
+
+  NodeId current = arena.alloc( Func { default_expr } );
+
+  BetaReducer reducer;
+
+  for (auto it = clauses.rbegin(); it != clauses.rend(); ++it) {
+    NodeId pattern = it->first;
+    NodeId body    = it->second;
+
+    NodeId shifted_comp = reducer.shift(arena, comparator, 1, 0);
+    NodeId shifted_else = reducer.shift(arena, current   , 1, 0);
+
+    NodeId cond = arena.alloc( App { shifted_comp, pattern } );
+    NodeId then_thunk = arena.alloc( Func { body } );
+
+    NodeId app1 = arena.alloc( App { cond, then_thunk   } );
+    NodeId app2 = arena.alloc( App { app1, shifted_else } );
+    NodeId zero = arena.alloc( Nat { 0 } ); // Dummy
+    NodeId expr = arena.alloc( App { app2, zero } );
+
+    current = arena.alloc( Func { expr } );
+
+  }
+
+  NodeId zero_top = arena.alloc( Nat { 0 } ); // Dummy
+  return arena.alloc( App { current, zero_top } );
 
 }

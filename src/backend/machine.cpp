@@ -17,7 +17,7 @@ Interpreter::Interpreter(MainConfig& c) : config(c) {
 
 NodeId Interpreter::expand_env(NodeId expr) {
 
-  const Node& node = arena.get(expr);
+  Node node = arena.get(expr);
 
   if (auto var = std::get_if<Global>(&node.data)) {
 

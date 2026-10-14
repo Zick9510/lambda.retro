@@ -61,4 +61,9 @@ private:
   NodeId _parse_composition();
 
   NodeId _parse_application();
+
+  NodeId _parse_let();
+
+  NodeId _parse_match();
+
 };

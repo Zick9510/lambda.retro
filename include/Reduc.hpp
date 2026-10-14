@@ -9,11 +9,11 @@ private:
 
   bool did_step = false;
 
-  NodeId shift(Arena& arena, NodeId node_id, int amount, uint32_t cutoff = 0);
-
 public:
 
   BetaReducer();
+
+  NodeId shift(Arena& arena, NodeId node_id, int amount, uint32_t cutoff = 0);
 
   std::pair<bool, NodeId> step(Arena& arena, NodeId node);
 

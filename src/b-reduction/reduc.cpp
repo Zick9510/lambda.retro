@@ -4,13 +4,11 @@
 
 #include "Common.hpp"
 
-// Private
-
 NodeId BetaReducer::shift(Arena& arena, NodeId node_id, int inc, uint32_t depth) {
 
   if (node_id == NULL_NODE) { return NULL_NODE; }
 
-  const Node& node = arena.get(node_id);
+  Node node = arena.get(node_id);
 
   if (auto var = std::get_if<Var>(&node.data)) {
     if (var->index >= depth) {
@@ -51,7 +49,7 @@ NodeId BetaReducer::substitute(Arena& arena, NodeId node_id, NodeId arg_id, uint
 
   if (node_id == NULL_NODE) { return NULL_NODE; }
 
-  const Node& node = arena.get(node_id);
+  Node node = arena.get(node_id);
 
   if (auto var = std::get_if<Var>(&node.data)) {
     if (var->index == depth) {
@@ -95,8 +93,6 @@ NodeId BetaReducer::substitute(Arena& arena, NodeId node_id, NodeId arg_id, uint
 
 }
 
-// Public
-
 BetaReducer::BetaReducer() = default;
 
 NodeId BetaReducer::deepReduce(Arena& arena, NodeId node_id) {
@@ -111,7 +107,7 @@ NodeId BetaReducer::deepReduce(Arena& arena, NodeId node_id) {
     current = next;
   }
 
-  const Node& node = arena.get(current);
+  Node node = arena.get(current);
 
   if (auto func = std::get_if<Func>(&node.data)) {
     return arena.alloc( Func { deepReduce(arena, func->body) } );
@@ -136,7 +132,7 @@ NodeId BetaReducer::deepReduce(Arena& arena, NodeId node_id) {
 
   if (node_id == NULL_NODE) { return { false, NULL_NODE }; }
 
-  const Node& node = arena.get(node_id);
+  Node node = arena.get(node_id);
 
   auto app = std::get_if<App>(&node.data);
   if (!app) return { false, node_id };
@@ -150,7 +146,7 @@ NodeId BetaReducer::deepReduce(Arena& arena, NodeId node_id) {
   auto [arg_stepped , next_arg ] = step(arena, arg_id);
   if (arg_stepped ) return { true, arena.alloc( App { func_id, next_arg } ) };
 
-  const Node& f_node = arena.get(func_id);
+  Node f_node = arena.get(func_id);
 
   if (auto func = std::get_if<Func>(&f_node.data)) {
     NodeId body_id = func->body;
@@ -160,7 +156,7 @@ NodeId BetaReducer::deepReduce(Arena& arena, NodeId node_id) {
 
   if (auto num = std::get_if<Nat>(&f_node.data)) {
 
-    const Node& arg_node = arena.get(arg_id);
+    Node arg_node = arena.get(arg_id);
     if (auto arg_num = std::get_if<Nat>(&arg_node.data)) { // (m n) = n ** m;
       uint64_t exponent =     num->value;
       uint64_t base     = arg_num->value;
@@ -187,12 +183,12 @@ NodeId BetaReducer::deepReduce(Arena& arena, NodeId node_id) {
   }
 
   if (auto f_app = std::get_if<App>(&f_node.data)) {
-    const Node& inner_f = arena.get(f_app->func);
+    Node inner_f = arena.get(f_app->func);
 
     if (auto builtin = std::get_if<Builtin>(&inner_f.data)) {
 
-      const Node& lhs_node = arena.get(f_app->arg);
-      const Node& rhs_node = arena.get(arg_id);
+      Node lhs_node = arena.get(f_app->arg);
+      Node rhs_node = arena.get(arg_id);
 
       auto lhs = std::get_if<Nat>(&lhs_node.data);
       auto rhs = std::get_if<Nat>(&rhs_node.data);
