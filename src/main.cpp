@@ -53,7 +53,7 @@ void print_help(char** argv) {
   std::cout << "Note: if you define a function that contains a symbol, it will colored a" << color::B_CYAN << " cyan" << color::RESET << " tone. This is meant for you to define operators and spot them more easily\n";
 
   std::cout << "That being said, I highly recommed following a little style I found really nice:\n";
-  std::cout << "  Varaibles written only in lower letters, so they get " << color::B_MAGENTA << "purple\n" << color::RESET;
+  std::cout << "  Variables written only in lower letters, so they get " << color::B_MAGENTA << "purple\n" << color::RESET;
   std::cout << "  And functions in all caps, so it's " << color::B_YELLOW << "yellow\n" << color::RESET;
 
   std::cout << "But, if you let me say one more thing... Do as you will and do as you want!! This is just a little advice\n\n";

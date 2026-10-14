@@ -46,6 +46,11 @@ enum class TokenKind : uint8_t {
   MATCH     , // match
   WITH      , // with
 
+  QUOTE     , // quote
+  EVAL      , // eval
+
+  MACRO     , // macro
+
   // Builtins
 
   // Arithmetic
@@ -95,6 +100,9 @@ static const std::unordered_map<TokenKind, std::string> KIND_TO_STRING = {
   { TokenKind::IN    , "in"     },
   { TokenKind::MATCH , "match"  },
   { TokenKind::WITH  , "with"   },
+  { TokenKind::QUOTE , "quote"  },
+  { TokenKind::EVAL  , "eval"   },
+  { TokenKind::MACRO , "macro"  },
 
 };
 
@@ -194,6 +202,11 @@ static const std::unordered_map<std::string, TokenKind> KEYWORDS = {
   {"match", TokenKind::MATCH},
   {"with" , TokenKind::WITH },
 
+  // Extra
+   {"quote", TokenKind::QUOTE},
+  {"eval" , TokenKind::EVAL },
+  {"macro", TokenKind::MACRO}
+
 };
 
 static const std::unordered_map<char, TokenKind> SYMBOLS = {
@@ -251,7 +264,10 @@ struct Closure { NodeId body ; NodeId      env; };
 
 struct Indirection { NodeId target; };
 
-using NodeVariant = std::variant<Global, Var, App, Func, Nat, Builtin, EnvNode, Closure, Indirection>;
+struct Quote { NodeId inner; };
+struct Eval  { NodeId inner; };
+
+using NodeVariant = std::variant<Global, Var, App, Func, Nat, Builtin, EnvNode, Closure, Indirection, Quote, Eval>;
 
 struct Node { NodeVariant data; };
 
@@ -348,9 +364,37 @@ public:
 
 };
 
+class StatementMacroDecl : public BaseNode<Statement, StatementMacroDecl> {
+public:
+  std::string name;
+
+  std::vector<std::string> args;
+
+  NodeId body;
+
+  StatementMacroDecl(
+    std::string n,
+    std::vector<std::string> a,
+    NodeId b
+  ) : name(n), args(a), body(b) {}
+
+  void print() const override {}
+
+};
+
+/* Extra */
+
 std::string get_name(uint32_t depth);
 
 void print_node(Arena& arena, NodeId node_id, uint32_t depth = 0);
+
+/* Macro */
+
+struct MacroDef {
+  std::vector<std::string> args;
+  NodeId body;
+
+};
 
 /* --- Config --- */
 

@@ -491,3 +491,13 @@ func A ( x ) {
 }
 
 A 4;
+
+quote (ADD 1 2);
+
+eval (quote (ADD 1 2) );
+
+macro unless (cond body1 body2) {
+	(EQ cond 0) body1 body2
+}
+
+unless ( EQ 4 5 ) { 0 } { 1 }

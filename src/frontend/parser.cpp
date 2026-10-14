@@ -170,6 +170,18 @@ NodeId Parser::_parse_primary() {
     return _parse_match();
   }
 
+  if (match(TokenKind::QUOTE)) {
+    get();
+    NodeId inner = _parse_expression();
+    return arena.alloc( Quote { inner } );
+  }
+
+  if (match(TokenKind::EVAL)) {
+    get();
+    NodeId inner = _parse_expression();
+    return arena.alloc( Eval { inner } );
+  }
+
   if (match(TokenKind::IDENTIFIER)) {
     std::string name = get().lexeme;
 
@@ -239,51 +251,82 @@ NodeId Parser::_parse_primary() {
 
   }
 
-  if (match(TokenKind::LCURLY)) { // Maps
+  if (match(TokenKind::LCURLY)) {
+    uint64_t saved_cursor = cursor;
+
     get();
-    NodeId combiner = _parse_primary();
-    check(TokenKind::PIPE);
 
-    std::vector<std::pair<NodeId, NodeId>> pairs;
+    bool is_map = false;
+    uint64_t lookahead = cursor;
 
-    NodeId terminator = NULL_NODE;
+    while (lookahead < tokens.size() &&
+    tokens[lookahead].kind != TokenKind::RCURLY &&
+    tokens[lookahead].kind != TokenKind::END_FILE) {
 
-    while (peek().kind != TokenKind::RCURLY && peek().kind != TokenKind::END_FILE) {
-
-      NodeId first = _parse_primary();
-
-      if (peek().kind == TokenKind::COLON) {
-        get();
-        NodeId second = _parse_primary();
-        pairs.push_back({first, second});
-
-      } else {
-        terminator = first;
+      if (tokens[lookahead].kind == TokenKind::PIPE) {
+        is_map = true;
         break;
+      }
+
+      lookahead++;
+
+    }
+
+    if (is_map) {
+      cursor = saved_cursor;
+      get();
+      NodeId combiner = _parse_primary();
+      check(TokenKind::PIPE);
+
+      std::vector<std::pair<NodeId, NodeId>> pairs;
+
+      NodeId terminator = NULL_NODE;
+
+      while (peek().kind != TokenKind::RCURLY && peek().kind != TokenKind::END_FILE) {
+
+        NodeId first = _parse_primary();
+
+        if (peek().kind == TokenKind::COLON) {
+          get();
+          NodeId second = _parse_primary();
+          pairs.push_back({first, second});
+
+        } else {
+          terminator = first;
+          break;
+
+        }
 
       }
 
+      check(TokenKind::RCURLY);
+
+      if (!terminator) {
+        throw std::runtime_error("Error: Map requires a terminator\n");
+      }
+
+      NodeId expr = terminator;
+
+      for (auto it = pairs.rbegin(); it != pairs.rend(); ++it) {
+
+        NodeId build_key  = arena.alloc( App { combiner , it->first  } );
+        NodeId inner_pair = arena.alloc( App { build_key, it->second } );
+        NodeId build_link = arena.alloc( App { combiner , inner_pair } );
+
+        expr = arena.alloc( App { build_link, expr } );
+
+      }
+
+      return expr;
+
+    } else {
+      cursor = saved_cursor;
+      get();
+      NodeId expr = _parse_expression();
+      check(TokenKind::RCURLY);
+      return expr;
+
     }
-
-    check(TokenKind::RCURLY);
-
-    if (!terminator) {
-      throw std::runtime_error("Error: Map requires a terminator\n");
-    }
-
-    NodeId expr = terminator;
-
-    for (auto it = pairs.rbegin(); it != pairs.rend(); ++it) {
-
-      NodeId build_key  = arena.alloc( App { combiner , it->first  } );
-      NodeId inner_pair = arena.alloc( App { build_key, it->second } );
-      NodeId build_link = arena.alloc( App { combiner , inner_pair } );
-
-      expr = arena.alloc( App { build_link, expr } );
-
-    }
-
-    return expr;
 
   }
 
@@ -307,6 +350,9 @@ std::unique_ptr<Statement> Parser::_parse_statement() {
 
     case TokenKind::FUNC: // Function definition
       return _parse_function_declaration();
+
+    case TokenKind::MACRO:
+      return _parse_macro_decl();
 
     default:
       break;
@@ -363,6 +409,31 @@ std::unique_ptr<Statement> Parser::_parse_function_declaration() {
   check(TokenKind::RCURLY);
 
   return std::make_unique<StatementFuncDecl>(name, args, body);
+
+}
+
+std::unique_ptr<Statement> Parser::_parse_macro_decl() {
+
+  check(TokenKind::MACRO);
+
+  std::string name = check(TokenKind::IDENTIFIER).lexeme;
+
+  check(TokenKind::LPAREN);
+
+  std::vector<std::string> args;
+
+  while (peek().kind != TokenKind::RPAREN && !is_end()) {
+    args.push_back(check(TokenKind::IDENTIFIER).lexeme);
+  }
+
+  check(TokenKind::RPAREN);
+
+  check(TokenKind::LCURLY);
+
+  NodeId body = _parse_expression();
+  check(TokenKind::RCURLY);
+
+  return std::make_unique<StatementMacroDecl>(name, args, body);
 
 }
 

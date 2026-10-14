@@ -68,7 +68,7 @@ bool Lexer::_check_number(const std::string& str) {
       case 'x':
         if (!('0' <= str[i] && str[i] <= '9' ||
               'a' <= str[i] && str[i] <= 'f' ||
-              'A' <= str[i] && str[i] <= 'F' || str[i] != '_')) { return false; }
+              'A' <= str[i] && str[i] <= 'F') && str[i] == '_') { return false; }
         break;
 
     }

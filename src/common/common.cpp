@@ -155,7 +155,7 @@ bool decode_list(Arena& arena, NodeId node_id, std::vector<NodeId>& elements, No
 }
 
 void print_node(Arena& arena, NodeId node_id, uint32_t depth) {
-  if (node_id == NULL_NODE) { std::cout << "<null>"; return ; }
+  if (node_id == NULL_NODE) { std::cout << "<null> "; return ; }
 
   node_id = unwrap(arena, node_id);
   const Node& node = arena.get(node_id);
@@ -248,6 +248,16 @@ void print_node(Arena& arena, NodeId node_id, uint32_t depth) {
 
   } else if (auto* b = std::get_if<Builtin>(&node.data)) {
     std::cout << color::BUILTIN << OPERATORS.at(b->op) << color::RESET;
+
+  } else if (auto* q = std::get_if<Quote>(&node.data)) {
+    std::cout << color::SYM << "quote " << color::RESET << "( ";
+    print_node(arena, q->inner, depth);
+    std::cout << ") ";
+
+  } else if (auto* e = std::get_if<Eval>(&node.data)) {
+    std::cout << color::SYM << "eval " << color::RESET << "( ";
+    print_node(arena, e->inner, depth);
+    std::cout << ") ";
 
   }
 

@@ -41,6 +41,18 @@ NodeId BetaReducer::shift(Arena& arena, NodeId node_id, int inc, uint32_t depth)
 
   }
 
+  if (auto q = std::get_if<Quote>(&node.data)) {
+    NodeId shifted = shift(arena, q->inner, inc, depth);
+    if (q->inner == shifted) { return node_id; }
+    return arena.alloc( Quote { shifted } );
+  }
+
+  if (auto e = std::get_if<Eval>(&node.data)) {
+    NodeId shifted = shift(arena, e->inner, inc, depth);
+    if (e->inner == shifted) { return node_id; }
+    return arena.alloc( Eval { shifted } );
+  }
+
   return node_id;
 
 }
@@ -89,6 +101,18 @@ NodeId BetaReducer::substitute(Arena& arena, NodeId node_id, NodeId arg_id, uint
 
   }
 
+  if (auto q = std::get_if<Quote>(&node.data)) {
+    NodeId sub = substitute(arena, q->inner, arg_id, depth);
+    if (q->inner == sub) { return node_id; }
+    return arena.alloc( Quote { sub } );
+  }
+
+  if (auto e = std::get_if<Eval>(&node.data)) {
+    NodeId sub = substitute(arena, e->inner, arg_id, depth);
+    if (e->inner == sub) { return node_id; }
+    return arena.alloc( Eval { sub } );
+  }
+
   return node_id;
 
 }
@@ -122,6 +146,13 @@ NodeId BetaReducer::deepReduce(Arena& arena, NodeId node_id) {
 
     return arena.alloc( App { sub_func, sub_arg } );
 
+  } else if (auto q = std::get_if<Quote>(&node.data)) {
+    //return arena.alloc( Quote { deepReduce(arena, q->inner) } );
+    return node_id;
+
+  } else if (auto e = std::get_if<Eval>(&node.data)) {
+    return arena.alloc( Eval { deepReduce(arena, e->inner) } );
+
   }
 
   return current;
@@ -133,6 +164,22 @@ NodeId BetaReducer::deepReduce(Arena& arena, NodeId node_id) {
   if (node_id == NULL_NODE) { return { false, NULL_NODE }; }
 
   Node node = arena.get(node_id);
+
+  if (auto eval = std::get_if<Eval>(&node.data)) {
+    auto [inner_stepped, next_inner] = step(arena, eval->inner);
+
+    if (inner_stepped) {
+      return { true, arena.alloc( Eval { next_inner } ) };
+    }
+
+    Node inner_node = arena.get(eval->inner);
+    if (auto quote = std::get_if<Quote>(&inner_node.data)) {
+      return { true, quote->inner };
+    }
+
+    return { false, node_id };
+
+  }
 
   auto app = std::get_if<App>(&node.data);
   if (!app) return { false, node_id };

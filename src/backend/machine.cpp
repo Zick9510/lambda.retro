@@ -17,7 +17,43 @@ Interpreter::Interpreter(MainConfig& c) : config(c) {
 
 NodeId Interpreter::expand_env(NodeId expr) {
 
+  if (expr == NULL_NODE) { return NULL_NODE; }
   Node node = arena.get(expr);
+
+  std::vector<NodeId> args;
+  NodeId curr = expr;
+  std::string macro_name = "";
+
+  while (curr != NULL_NODE) {
+    Node curr_node = arena.get(curr);
+    if (auto app = std::get_if<App>(&curr_node.data)) {
+      args.push_back(app->arg);
+      curr = app->func;
+
+    } else if ( auto global = std::get_if<Global>(&curr_node.data)) {
+      macro_name = global->name;
+      break;
+
+    } else {
+      break;
+
+    }
+
+  }
+
+  if (!macro_name.empty() && macros.count(macro_name)) {
+    std::reverse(args.begin(), args.end());
+    MacroDef mac = macros[macro_name];
+
+    if (args.size() != mac.args.size()) {
+      throw std::runtime_error("Macro '" + macro_name + "' expected '" + std::to_string(mac.args.size()) + "' arguments, got '" + std::to_string(args.size()));
+
+    }
+
+    NodeId expanded_body = substitute_macro(mac.body, mac.args, args);
+    return expand_env(expanded_body);
+
+  }
 
   if (auto var = std::get_if<Global>(&node.data)) {
 
@@ -47,6 +83,16 @@ NodeId Interpreter::expand_env(NodeId expr) {
     NodeId new_arg  = expand_env(arg_id );
 
     return arena.alloc( App { new_func, new_arg } );
+  }
+
+  if (auto q = std::get_if<Quote>(&node.data)) {
+    return arena.alloc( Quote { expand_env(q->inner) } );
+
+  }
+
+  if (auto e = std::get_if<Eval>(&node.data)) {
+    return arena.alloc( Eval { expand_env(e->inner) } );
+
   }
 
   if (std::holds_alternative<Var>    (node.data) ||
@@ -117,9 +163,59 @@ void Interpreter::execute(const Block* program) {
       print_node(arena, printable);
       std::cout << "]\n\n";
 
+    } else if (auto macro_decl = dynamic_cast<const StatementMacroDecl*>(stmt.get())) {
+      macros[macro_decl->name] = MacroDef { macro_decl->args, macro_decl->body };
+
+      std::cout << color::YELLOW << " M  " << color::RESET << "[ " << get_color(macro_decl->name) << macro_decl->name << color::RESET << " ( ";
+
+      for (const auto& a : macro_decl->args) {
+        std::cout << get_color(a) << a << color::RESET << ' ';
+      }
+
+      std::cout << ") ]\n\n";
+
     }
 
   }
+
+}
+
+NodeId Interpreter::substitute_macro(NodeId node_id, const std::vector<std::string>& param, const std::vector<NodeId>& args) {
+
+  if (node_id == NULL_NODE) { return NULL_NODE; }
+
+  Node node = arena.get(node_id);
+
+  if (auto global = std::get_if<Global>(&node.data)) {
+
+    for (size_t i = 0; i < param.size(); ++i) {
+      if (global->name == param[i]) { return args[i]; }
+    }
+
+    return node_id;
+
+  }
+
+  if (auto app = std::get_if<App>(&node.data)) {
+    NodeId new_f = substitute_macro(app->func, param, args);
+    NodeId new_a = substitute_macro(app->arg, param, args);
+    return arena.alloc( App { new_f, new_a } );
+  }
+
+  if (auto func = std::get_if<Func>(&node.data)) {
+    NodeId new_body = substitute_macro(func->body, param, args);
+    return arena.alloc( Func { new_body } );
+  }
+
+  if (auto q = std::get_if<Quote>(&node.data)) {
+    return arena.alloc( Quote { substitute_macro(q->inner, param, args) }  );
+  }
+
+  if (auto e = std::get_if<Eval>(&node.data)) {
+    return arena.alloc( Eval { substitute_macro(e->inner, param, args) } );
+  }
+
+  return node_id;
 
 }
 

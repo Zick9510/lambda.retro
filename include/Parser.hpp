@@ -44,15 +44,17 @@ public:
 
 private:
 
-  std::unique_ptr<Statement>  _parse_statement_expression();
+  std::unique_ptr<Statement> _parse_statement_expression();
 
-  std::unique_ptr<Statement>  _parse_statement();
+  std::unique_ptr<Statement> _parse_statement();
 
   NodeId _parse_expression();
 
   NodeId _parse_primary();
 
-  std::unique_ptr<Statement>  _parse_function_declaration();
+  std::unique_ptr<Statement> _parse_function_declaration();
+
+  std::unique_ptr<Statement> _parse_macro_decl();
 
   void _parse_import(Block& current_block);
 
